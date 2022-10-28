@@ -4,6 +4,7 @@ import { Player as PlayerModel, PlayerLocation } from '../types/CoveyTownSocket'
 
 export type PlayerEvents = {
   movement: (newLocation: PlayerLocation) => void;
+  scoreChanged: (score: number) => void;
 };
 
 export type PlayerGameObjects = {
@@ -18,6 +19,8 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   private readonly _userName: string;
 
+  private _score: number;
+
   public gameObjects?: PlayerGameObjects;
 
   constructor(id: string, userName: string, location: PlayerLocation) {
@@ -25,6 +28,7 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
     this._id = id;
     this._userName = userName;
     this._location = location;
+    this._score = 0;
   }
 
   set location(newLocation: PlayerLocation) {
@@ -35,6 +39,15 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   get location(): PlayerLocation {
     return this._location;
+  }
+
+  set score(score: number) {
+    this._score = score;
+    this.emit('scoreChanged', score);
+  }
+
+  get score() {
+    return this._score;
   }
 
   get userName(): string {

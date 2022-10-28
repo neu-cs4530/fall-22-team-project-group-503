@@ -1,6 +1,5 @@
 import assert from 'assert';
 import EventEmitter from 'events';
-import _ from 'lodash';
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import TypedEmitter from 'typed-emitter';
@@ -27,6 +26,12 @@ export type ConnectionProperties = {
   userName: string;
   townID: string;
   loginController: LoginController;
+};
+
+export type PlayerScore = {
+  id: string;
+  userName: string;
+  score: number;
 };
 
 /**
@@ -58,6 +63,11 @@ export type TownEvents = {
    * the new location can be found on the PlayerController.
    */
   playerMoved: (movedPlayer: PlayerController) => void;
+  /**
+   * An event that indicates that a player score has changed. This event is dispatched after updating the player's location -
+   * the new score can be found on the PlayerController.
+   */
+  playerScoreChanged: (updatedPlayer: PlayerController) => void;
   /**
    * An event that indicates that the set of conversation areas has changed. This event is dispatched
    * when a conversation area is created, or when the set of active conversations has changed. This event is dispatched
@@ -449,6 +459,23 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   /**
+   * Emit a scoreUpdate event for the current player, updating the state locally and
+   * also notifying the townService that our player moved.
+   *
+   * Note: it is the responsibility of the townService to set the 'interactableID' parameter
+   * of the player's score, and any interactableID set here may be overwritten by the townService
+   *
+   * @param newLocation
+   */
+  public emitScore(score: number) {
+    this._socket.emit('scoreUpdate', score);
+    const ourPlayer = this._ourPlayer;
+    assert(ourPlayer);
+    ourPlayer.score = score;
+    this.emit('playerScoreChanged', ourPlayer);
+  }
+
+  /**
    * Emit a chat message to the townService
    *
    * @param message
@@ -699,6 +726,48 @@ export function useActiveConversationAreas(): ConversationAreaController[] {
     };
   }, [townController, setConversationAreas]);
   return conversationAreas;
+}
+
+/**
+ * A react hook to return the PlayerController's corresponding to each player in the town after a score update.
+ *
+ * This hook will cause components that use it to re-render when the score of players in the town changes.
+ *
+ * This hook will *not* trigger re-renders if a player moves.
+ *
+ * This hook relies on the TownControllerContext.
+ *
+ * @returns an array of PlayerController's, representing the current set of players in the town
+ */
+export function useLeaderboard(): PlayerScore[] {
+  const townController = useTownController();
+  const [players, setPlayers] = useState<PlayerController[]>(townController.players);
+  useEffect(() => {
+    const updatePlayers = (update: PlayerController) => {
+      const newPlayers: PlayerController[] = [];
+      townController.players.forEach(p => {
+        if (p.id === update.id) {
+          p.score = update.score;
+        }
+        newPlayers.push(p);
+      });
+      setPlayers(newPlayers);
+    };
+
+    townController.addListener('playerScoreChanged', updatePlayers);
+    return () => {
+      townController.removeListener('playerScoreChanged', updatePlayers);
+    };
+  }, [townController, setPlayers]);
+  const leaderboard: PlayerScore[] = [];
+  players.forEach(player => {
+    leaderboard.push({ id: player.id, userName: player.userName, score: player.score });
+  });
+  leaderboard.sort((a, b) => {
+    return a.score - b.score;
+  });
+  leaderboard.slice(0, 10);
+  return leaderboard;
 }
 
 /**
