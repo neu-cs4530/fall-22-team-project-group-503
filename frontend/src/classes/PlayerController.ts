@@ -43,7 +43,10 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
 
   set score(score: number) {
     this._score = score;
-    this.emit('scoreChanged', score);
+
+    if (this.score !== score) {
+      this.emit('scoreChanged', score);
+    }
   }
 
   get score() {
