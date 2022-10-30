@@ -1,7 +1,7 @@
 /**
  * Represents the possible answer choice you can make in a game of RPS.
  */
-enum Answer {
+export enum Answer {
   ROCK,
   PAPER,
   SCISSORS,
