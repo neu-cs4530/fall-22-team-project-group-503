@@ -4,10 +4,13 @@ import { Answer } from './Answer';
 import { GameStatus } from './GameStatus';
 import PlayerController from './PlayerController';
 
+const DRAW = 'draw';
+
 export type RPSEvents = {
   statusChange: (newStatus: GameStatus) => void;
   playerWon: (player: PlayerController) => void;
   playerLost: (player: PlayerController) => void;
+  playersDrawed: (draw: string) => void;
 };
 
 /**
@@ -35,10 +38,10 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
   }
 
   set status(newStatus: GameStatus) {
-    this._status = newStatus;
     if (this.status !== newStatus) {
       this.emit('statusChange', newStatus);
     }
+    this._status = newStatus;
   }
 
   get playerOne(): PlayerController {
@@ -47,6 +50,11 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
 
   get playerTwo(): PlayerController {
     return this._playerTwo;
+  }
+
+  public startGame() {
+    this.status = GameStatus.STARTED;
+    this.emit('statusChange', GameStatus.STARTED);
   }
 
   /**
@@ -63,6 +71,7 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     if (playerOneAnswer === Answer.ROCK) {
       if (playerTwoAnswer === Answer.ROCK) {
         playerWon = undefined;
+        // TODO - todo note drawing with undefined?
       } else if (playerTwoAnswer === Answer.PAPER) {
         playerWon = this.playerTwo;
       } else {
@@ -87,7 +96,10 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     }
     if (playerWon) {
       this.emit('playerWon', playerWon);
+    } else {
+      this.emit('playersDrawed', DRAW);
     }
+    this.status = GameStatus.FINISHED;
     return playerWon;
   }
 
@@ -108,6 +120,7 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
       } else {
         this.emit('playerLost', this.playerOne);
       }
+      this.status = GameStatus.FINISHED;
     }
     return winner;
   }
