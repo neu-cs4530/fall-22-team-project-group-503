@@ -84,4 +84,5 @@ export interface ClientToServerEvents {
   chatMessage: (message: ChatMessage) => void;
   playerMovement: (movementData: PlayerLocation) => void;
   interactableUpdate: (update: Interactable) => void;
+  scoreUpdate: (score: number) => void;
 }
