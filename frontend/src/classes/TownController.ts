@@ -649,7 +649,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    */
   public getLeaderboard(): PlayerScore[] {
     const leaderboard: PlayerScore[] = [];
-    this._players.forEach(player => {
+    this.players.forEach(player => {
       leaderboard.push({ id: player.id, userName: player.userName, score: player.score });
     });
     leaderboard.sort((a, b) => {
