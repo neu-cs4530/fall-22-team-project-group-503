@@ -19,7 +19,7 @@ import {
 } from '../types/CoveyTownSocket';
 import { isConversationArea, isViewingArea } from '../types/TypeUtils';
 import PlayerController from './PlayerController';
-import TownController, { TownEvents } from './TownController';
+import TownController, { PlayerScore, TownEvents } from './TownController';
 import ViewingAreaController from './ViewingAreaController';
 
 /**
@@ -456,28 +456,29 @@ describe('TownController', () => {
     });
   });
   describe('Test aspects of the Rock Paper Scissors implementation in the TownController', () => {
-    let testPlayer: PlayerModel;
-    let testPlayerScoreChangedFn: jest.MockedFunction<TownEvents['playerScoreChanged']>;
+    let testPlayer: PlayerController;
 
     beforeEach(() => {
       //Create a new PlayerModel
-      testPlayer = {
-        id: nanoid(),
-        location: { moving: false, rotation: 'back', x: 0, y: 1, interactableID: nanoid() },
-        userName: nanoid(),
-      };
+      testPlayer = new PlayerController(nanoid(), `Player_0`, {
+        moving: false,
+        rotation: 'back',
+        x: 0,
+        y: 1,
+        interactableID: nanoid(),
+      });
     });
 
     it('Test emit score', () => {
-      let newScore = 1;
+      const newScore = 1;
       testController.emitScore(newScore);
-      emitEventAndExpectListenerFiring('scoreUpdate', newScore, 'playerScoreChanged', testPlayer)
+      emitEventAndExpectListenerFiring('scoreUpdate', newScore, 'playerScoreChanged', testPlayer);
     });
     it('Test backend leaderboard returns leaderboard with 10 players', () => {
       let newPlayers: PlayerController[] = [];
-      let newPlayersScore: PlayerScore[];
+      const newPlayersScore: PlayerScore[] = [];
       for (let i = 0; i < 10; i++) {
-        let newPlayer = new PlayerController(nanoid(), `Player_${i}`, {
+        const newPlayer = new PlayerController(nanoid(), `Player_${i}`, {
           moving: false,
           rotation: 'back',
           x: 0,
@@ -486,14 +487,14 @@ describe('TownController', () => {
         });
         newPlayer.score = i;
         newPlayers.push(newPlayer);
-        newPlayersScore.push({id: newPlayer.id, userName: newPlayer.userName, score: i})
+        newPlayersScore.push({ id: newPlayer.id, userName: newPlayer.userName, score: i });
       }
       newPlayers = newPlayers.sort(() => Math.random() * 0.5);
       newPlayersScore.sort((a, b) => {
         return a.score - b.score;
       });
       testController.emit('playersChanged', newPlayers);
-      expect(testController.useLeaderboard(), newPlayersScore);
+      expect(testController.getLeaderboard()).toBe(newPlayersScore);
     });
     it('Test leaderboard returns leaderboard with 1 player', () => {
       const newPlayer = new PlayerController(nanoid(), `Player_1`, {
@@ -504,15 +505,17 @@ describe('TownController', () => {
         interactableID: nanoid(),
       });
 
-      let playerScore: PlayerScore[] = [{id: newPlayer.id, userName: newPlayer.userName, score: 0}];
+      const playerScore: PlayerScore[] = [
+        { id: newPlayer.id, userName: newPlayer.userName, score: 0 },
+      ];
       testController.emit('playersChanged', [newPlayer]);
-      expect(testController.useLeaderboard(), playerScore);
+      expect(testController.getLeaderboard()).toBe(playerScore);
     });
     it('Test backend leaderboard returns leaderboard with 11 player', () => {
       let newPlayers: PlayerController[] = [];
-      let newPlayersScore: PlayerScore[];
+      const newPlayersScore: PlayerScore[] = [];
       for (let i = 0; i < 11; i++) {
-        let newPlayer = new PlayerController(nanoid(), `Player_${i}`, {
+        const newPlayer = new PlayerController(nanoid(), `Player_${i}`, {
           moving: false,
           rotation: 'back',
           x: 0,
@@ -521,7 +524,7 @@ describe('TownController', () => {
         });
         newPlayer.score = i;
         newPlayers.push(newPlayer);
-        newPlayersScore.push({id: newPlayer.id, userName: newPlayer.userName, score: i})
+        newPlayersScore.push({ id: newPlayer.id, userName: newPlayer.userName, score: i });
       }
       newPlayers = newPlayers.sort(() => Math.random() * 0.5);
       newPlayersScore.sort((a, b) => {
@@ -529,10 +532,8 @@ describe('TownController', () => {
       });
       newPlayersScore.splice(0, 10);
       testController.emit('playersChanged', newPlayers);
-      expect(testController.useLeaderboard(), newPlayersScore);
+      expect(testController.getLeaderboard()).toBe(newPlayersScore);
     });
-    
-
   });
   it('Disconnects the socket and clears the coveyTownController when disconnection', async () => {
     emitEventAndExpectListenerFiring('townClosing', undefined, 'disconnect');

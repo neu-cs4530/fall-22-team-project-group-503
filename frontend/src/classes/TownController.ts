@@ -642,6 +642,21 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     return this.players.filter(p => isNearby(p));
   }
 
+  /**
+   * Determine the top 10 scoring players and their corresponding scores
+   * @returns The scores of the top 10 players in descending order
+   */
+  public getLeaderboard(): PlayerScore[] {
+    const leaderboard: PlayerScore[] = [];
+    this._players.forEach(player => {
+      leaderboard.push({ id: player.id, userName: player.userName, score: player.score });
+    });
+    leaderboard.sort((a, b) => {
+      return a.score - b.score;
+    });
+    return leaderboard.slice(0, 10);
+  }
+
   private _playersByIDs(playerIDs: string[]): PlayerController[] {
     return this._playersInternal.filter(eachPlayer => playerIDs.includes(eachPlayer.id));
   }
