@@ -1,5 +1,6 @@
 import assert from 'assert';
 import EventEmitter from 'events';
+import _ from 'lodash';
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import TypedEmitter from 'typed-emitter';
@@ -11,7 +12,6 @@ import useTownController from '../hooks/useTownController';
 import {
   ChatMessage,
   CoveyTownSocket,
-  Player,
   PlayerLocation,
   TownSettingsUpdate,
   ViewingArea as ViewingAreaModel,
@@ -19,7 +19,7 @@ import {
 import { isConversationArea, isViewingArea } from '../types/TypeUtils';
 import ConversationAreaController from './ConversationAreaController';
 import PlayerController from './PlayerController';
-import RPS, { RPSEvents } from './RPS';
+import RPS from './RPS';
 import ViewingAreaController from './ViewingAreaController';
 
 const CALCULATE_NEARBY_PLAYERS_DELAY = 300;
@@ -39,7 +39,7 @@ export type PlayerScore = {
 export type RPSChallenge = {
   challenger: PlayerController;
   challengee: PlayerController;
-  response: boolean;
+  response?: boolean;
 };
 
 /**
@@ -107,17 +107,29 @@ export type TownEvents = {
    */
   interact: <T extends Interactable>(typeName: T['name'], obj: T) => void;
 
-  // playerChallenged: (challenge: RPSChallenge) => void;
+  /**
+   * This is subject to change, but when selecting a player to challenge (clicking on another avatar which triggers the confirmation popup), this event gets emitted
+   */
+  rpsOpponentCreated: (player: PlayerController) => void;
 
+  /**
+   * An event that indicates that a game of RPS has been started, which is the parameter passed to the listener.
+   */
   rpsGameStarted: (rpsGame: RPS) => void;
-  // TODO hook for useRPSGame
 
+  /**
+   * An event that indicates that an RPS challenge has been sent.
+   * The event is dispatched when a user clicks on another user's sprite.
+   * The challenge is passed as a parameter.
+   */
   rpsChallengeSent: (challenge: RPSChallenge) => void;
-  // rpsChallengeReceived: (challengee: PlayerController) => void;
 
+  /**
+   * An event that indicates that an RPS challenge response has been sent.
+   * The event is dispatched when a user responds to an RPS challenge they received.
+   * The challenge as well as if its been accepted or declined is passed as a parameter.
+   */
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
-
-  rpsChallengeDeclined: (challenge: RPSChallenge) => void;
 };
 
 /**
@@ -422,7 +434,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         }
         this.emit('playerMoved', playerToUpdate);
       } else {
-        //TODO: It should not be possible to receive a playerMoved event for a player that is not already in the players array, right?
         const newPlayer = PlayerController.fromPlayerModel(movedPlayer);
         this._players = this.players.concat(newPlayer);
         this.emit('playerMoved', newPlayer);
@@ -464,11 +475,18 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * Once the challengee accepts the challenge, a game is started
      */
     this._socket.on('rpsChallengeResponse', response => {
+      // FIXME
       if (response.response) {
+        // this.emit('rpsGameStarted', this.startRPS(response));
         this.emit('rpsGameStarted', new RPS(response.challenger, response.challengee));
-      } else {
-        this.emit('rpsChallengeDeclined', response);
       }
+    });
+
+    /**
+     * send challenge
+     */
+    this._socket.on('rpsChallengeSent', challenge => {
+      this.emit('rpsChallengeSent', challenge);
     });
   }
 
@@ -522,12 +540,37 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   /**
+   * Emit a challenge created event against the potatential opponent.
+   * @param potentialOpponent
+   */
+  createChallengeRequestAgainstPlayer(potentialOpponent: PlayerController): () => void {
+    return () => {
+      this.emit('rpsOpponentCreated', potentialOpponent);
+    };
+  }
+
+  /**
    * Emit a chat message to the townService
    *
    * @param message
    */
   public emitChatMessage(message: ChatMessage) {
     this._socket.emit('chatMessage', message);
+  }
+
+  /**
+   * Starts the RPS game.
+   *
+   * @param response
+   * @return RPSnew game if response is true.
+   */
+  public async startRPS(response: RPSChallenge): Promise<RPS | undefined> {
+    if (response) {
+      const newGame = new RPS(response.challenger, response.challengee);
+      this.emit('rpsGameStarted', newGame);
+      return newGame;
+    }
+    return undefined;
   }
 
   /**
@@ -736,7 +779,7 @@ export function useTownSettings() {
  * @returns a RPSChallenge object,
  *  representing the current settings of the current town
  */
-export function useChallengeSent() {
+export function useChallengeSent(): PlayerController | undefined {
   const townController = useTownController();
   const [challenger, setChallenger] = useState<PlayerController>();
 
@@ -752,6 +795,71 @@ export function useChallengeSent() {
     };
   }, [townController, setChallenger]);
   return challenger;
+}
+
+/**
+ * A react hook to show a response to an RPS challenge causing it to re-render when the response changes.
+ * @returns the response to a player's RPS challenge.
+ */
+export function useChallengeResponse() {
+  const townController = useTownController();
+  const [challengeStatus, setChallengeStatus] = useState<boolean>();
+
+  useEffect(() => {
+    const challengeStatusHandler = (response: RPSChallenge) => {
+      if (response.response !== true) {
+        setChallengeStatus(false);
+      } else {
+        setChallengeStatus(true);
+      }
+    };
+    townController.addListener('rpsChallengeResponse', challengeStatusHandler);
+    return () => {
+      townController.removeListener('rpsChallengeResponse', challengeStatusHandler);
+    };
+  }, [townController, setChallengeStatus]);
+  return challengeStatus;
+}
+
+/**
+ * A react hook that retrieves a game of RPS. Relies on TownControllerContext.
+ * @return the RPS game
+ */
+export function useRPSGame(): RPS | undefined {
+  const townController = useTownController();
+  const [rpsGame, setRPSGame] = useState<RPS>();
+
+  useEffect(() => {
+    const rpsHandler = (updatedGame: RPS) => {
+      setRPSGame(updatedGame);
+    };
+    townController.addListener('rpsGameStarted', rpsHandler);
+    return () => {
+      townController.removeListener('rpsGameStarted', rpsHandler);
+    };
+  }, [townController, setRPSGame]);
+  return rpsGame;
+}
+
+// function to listen to 'rpsChallengeCreated' and return the potentialOpponent
+/**
+ * A react hook that retrieves the potential opponent. Relies on TownControllerContext.
+ * @return the potential opponent
+ */
+export function usePotentialOpponent(): PlayerController | undefined {
+  const townController = useTownController();
+  const [potentialOpponent, setPotentialOpponent] = useState<PlayerController>();
+
+  useEffect(() => {
+    const opponentHandler = (opponent: PlayerController) => {
+      setPotentialOpponent(opponent);
+    };
+    townController.addListener('rpsOpponentCreated', opponentHandler);
+    return () => {
+      townController.removeListener('rpsOpponentCreated', opponentHandler);
+    };
+  }, [townController, setPotentialOpponent]);
+  return potentialOpponent;
 }
 
 /**
