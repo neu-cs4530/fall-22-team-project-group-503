@@ -78,6 +78,8 @@ export interface ServerToClientEvents {
   townClosing: () => void;
   chatMessage: (message: ChatMessage) => void;
   interactableUpdate: (interactable: Interactable) => void;
+  rpsChallengeSent: (challenge: RPSChallenge) => void;
+  rpsChallengeResponse: (challenge: RPSChallenge) => void;
 }
 
 export interface ClientToServerEvents {
@@ -85,4 +87,6 @@ export interface ClientToServerEvents {
   playerMovement: (movementData: PlayerLocation) => void;
   interactableUpdate: (update: Interactable) => void;
   scoreUpdate: (score: number) => void;
+  rpsChallengeSent: (challenge: RPSChallenge) => void;
+  rpsChallengeResponse: (challenge: RPSChallenge) => void;
 }

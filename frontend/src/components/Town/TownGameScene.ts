@@ -31,6 +31,11 @@ export default class TownGameScene extends Phaser.Scene {
   addOverlapExit(interactable: Interactable, callback: () => void) {
     this._pendingOverlapExits.set(interactable, callback);
   }
+  // TODO
+  /*
+   * when coding challenge dialog
+   * on accept or reject, emit challengeResponse using this.towncontroller, use useChallenger hook for challlenger, ourPlayer for challengee
+   */
 
   private _players: PlayerController[] = [];
 
@@ -495,6 +500,7 @@ export default class TownGameScene extends Phaser.Scene {
       const sprite = this.physics.add
         .sprite(player.location.x, player.location.y, 'atlas', 'misa-front')
         .setSize(30, 40)
+        .on('clickEvent', this.coveyTownController.challenge(player))
         .setOffset(0, 24);
       const label = this.add.text(
         player.location.x,

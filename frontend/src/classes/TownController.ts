@@ -11,6 +11,7 @@ import useTownController from '../hooks/useTownController';
 import {
   ChatMessage,
   CoveyTownSocket,
+  Player,
   PlayerLocation,
   TownSettingsUpdate,
   ViewingArea as ViewingAreaModel,
@@ -18,6 +19,7 @@ import {
 import { isConversationArea, isViewingArea } from '../types/TypeUtils';
 import ConversationAreaController from './ConversationAreaController';
 import PlayerController from './PlayerController';
+import RPS, { RPSEvents } from './RPS';
 import ViewingAreaController from './ViewingAreaController';
 
 const CALCULATE_NEARBY_PLAYERS_DELAY = 300;
@@ -32,6 +34,12 @@ export type PlayerScore = {
   id: string;
   userName: string;
   score: number;
+};
+
+export type RPSChallenge = {
+  challenger: PlayerController;
+  challengee: PlayerController;
+  response: boolean;
 };
 
 /**
@@ -98,6 +106,18 @@ export type TownEvents = {
    * @param obj the interactable that is being interacted with
    */
   interact: <T extends Interactable>(typeName: T['name'], obj: T) => void;
+
+  // playerChallenged: (challenge: RPSChallenge) => void;
+
+  rpsGameStarted: (rpsGame: RPS) => void;
+  // TODO hook for useRPSGame
+
+  rpsChallengeSent: (challenge: RPSChallenge) => void;
+  // rpsChallengeReceived: (challengee: PlayerController) => void;
+
+  rpsChallengeResponse: (challenge: RPSChallenge) => void;
+
+  rpsChallengeDeclined: (challenge: RPSChallenge) => void;
 };
 
 /**
@@ -439,6 +459,17 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         updatedViewingArea?.updateFrom(interactable);
       }
     });
+
+    /**
+     * Once the challengee accepts the challenge, a game is started
+     */
+    this._socket.on('rpsChallengeResponse', response => {
+      if (response.response) {
+        this.emit('rpsGameStarted', new RPS(response.challenger, response.challengee));
+      } else {
+        this.emit('rpsChallengeDeclined', response);
+      }
+    });
   }
 
   /**
@@ -473,6 +504,21 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     assert(ourPlayer);
     ourPlayer.score = score;
     this.emit('playerScoreChanged', ourPlayer);
+  }
+
+  /**
+   * Emit a challenge event for the current player to the given player
+   *
+   * @param player
+   */
+  challengePlayer(player: PlayerController): () => void {
+    return () => {
+      this.emit('rpsChallengeSent', {
+        challenger: this.ourPlayer,
+        challengee: player,
+        response: false,
+      });
+    };
   }
 
   /**
@@ -679,6 +725,33 @@ export function useTownSettings() {
     };
   }, [townController]);
   return { friendlyName, isPubliclyListed };
+}
+
+/**
+ * A react hook to show a player who just challenged them.
+ *
+ * This hook will cause components that use it to re-render when the settings change.
+ *
+ * This hook relies on the TownControllerContext.
+ * @returns a RPSChallenge object,
+ *  representing the current settings of the current town
+ */
+export function useChallengeSent() {
+  const townController = useTownController();
+  const [challenger, setChallenger] = useState<PlayerController>();
+
+  useEffect(() => {
+    const challengeHandler = (rpsEvent: RPSChallenge) => {
+      if (rpsEvent.challengee === townController.ourPlayer) {
+        setChallenger(rpsEvent.challenger);
+      }
+    };
+    townController.addListener('rpsChallengeSent', challengeHandler);
+    return () => {
+      townController.removeListener('rpsChallengeSent', challengeHandler);
+    };
+  }, [townController, setChallenger]);
+  return challenger;
 }
 
 /**
