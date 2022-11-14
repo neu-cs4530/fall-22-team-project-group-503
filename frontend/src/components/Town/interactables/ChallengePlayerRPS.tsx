@@ -14,7 +14,7 @@ import useTownController from '../../../hooks/useTownController';
 
 export default function ChallengePlayerRPS(): JSX.Element {
   const coveyTownController = useTownController();
-  const potentialOpponent = usePotentialOpponent();
+  let potentialOpponent = usePotentialOpponent();
   //   const [player, setPlayer] = useState<PlayerController>(coveyTownController.ourPlayer);
 
   // get the challenge player (from TownGameScene.ts line 503 `createPlayerSprites`)
@@ -24,6 +24,7 @@ export default function ChallengePlayerRPS(): JSX.Element {
   const closeModal = useCallback(() => {
     coveyTownController.unPause();
     close();
+    potentialOpponent = undefined;
   }, [coveyTownController]);
 
   const toast = useToast();
@@ -42,7 +43,7 @@ export default function ChallengePlayerRPS(): JSX.Element {
     } catch (err) {
       if (err instanceof Error) {
         toast({
-          title: 'Unable to create conversation',
+          title: 'Unable to create RPS Challenge',
           description: err.toString(),
           status: 'error',
         });

@@ -500,8 +500,15 @@ export default class TownGameScene extends Phaser.Scene {
       const sprite = this.physics.add
         .sprite(player.location.x, player.location.y, 'atlas', 'misa-front')
         .setSize(30, 40)
-        .on('clickEvent', this.coveyTownController.createChallengeRequestAgainstPlayer(player)) // TODO
+        //.on('pointerdown', () => console.log(`challenge ${player.userName} player here?`)) // TODO this is in the wrong function?
+        // .on('pointerdown', this.coveyTownController.createChallengeRequestAgainstPlayer(player))
         .setOffset(0, 24);
+      sprite.setInteractive();
+      // sprite.on('pointerdown', () => console.log(`challenge ${player.userName} player here?`));
+      sprite.on(
+        'pointerdown',
+        this.coveyTownController.createChallengeRequestAgainstPlayer(player),
+      );
       const label = this.add.text(
         player.location.x,
         player.location.y - 20,

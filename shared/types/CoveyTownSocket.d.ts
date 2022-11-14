@@ -79,6 +79,7 @@ export interface ServerToClientEvents {
   chatMessage: (message: ChatMessage) => void;
   interactableUpdate: (interactable: Interactable) => void;
   rpsChallengeSent: (challenge: RPSChallenge) => void;
+  rpsChallengeReceived: (challenge: RPSChallenge) => void;
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
 }
 
@@ -88,5 +89,5 @@ export interface ClientToServerEvents {
   interactableUpdate: (update: Interactable) => void;
   scoreUpdate: (score: number) => void;
   rpsChallengeSent: (challenge: RPSChallenge) => void;
-  rpsChallengeResponse: (challenge: RPSChallenge) => void;
+  // rpsChallengeResponse: (challenge: RPSChallenge) => void;
 }

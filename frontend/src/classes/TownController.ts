@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import TypedEmitter from 'typed-emitter';
 import Interactable from '../components/Town/Interactable';
+import AcceptChallengeRPS from '../components/Town/interactables/AcceptChallengeRPS';
+import ChallengePlayerRPS from '../components/Town/interactables/ChallengePlayerRPS';
 import ViewingArea from '../components/Town/interactables/ViewingArea';
 import { LoginController } from '../contexts/LoginControllerContext';
 import { TownsService, TownsServiceClient } from '../generated/client';
@@ -488,6 +490,12 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     this._socket.on('rpsChallengeSent', challenge => {
       this.emit('rpsChallengeSent', challenge);
     });
+
+    // this._socket.on('rpsChallengeReceived', challenge => {
+    //   AcceptChallengeRPS();
+    //   this.emit('rpsChallengeReceived', challenge);
+    //   this.challengePlayer
+    // });
   }
 
   /**
@@ -530,22 +538,18 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param player
    */
   challengePlayer(player: PlayerController): () => void {
+    console.log('challenginh the other player');
+    // this.emit('rpsChallengeSent', {
+    //   challenger: this.ourPlayer,
+    //   challengee: player,
+    //   response: false,
+    // });
     return () => {
       this.emit('rpsChallengeSent', {
         challenger: this.ourPlayer,
         challengee: player,
         response: false,
       });
-    };
-  }
-
-  /**
-   * Emit a challenge created event against the potatential opponent.
-   * @param potentialOpponent
-   */
-  createChallengeRequestAgainstPlayer(potentialOpponent: PlayerController): () => void {
-    return () => {
-      this.emit('rpsOpponentCreated', potentialOpponent);
     };
   }
 
@@ -734,6 +738,17 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   private _playersByIDs(playerIDs: string[]): PlayerController[] {
     return this._playersInternal.filter(eachPlayer => playerIDs.includes(eachPlayer.id));
   }
+
+  /**
+   * Emit a challenge created event against the potatential opponent.
+   * @param potentialOpponent
+   */
+  createChallengeRequestAgainstPlayer(potentialOpponent: PlayerController): () => void {
+    return () => {
+      console.log(`create challenge request called against ${potentialOpponent.userName}`); // FIXME
+      this.emit('rpsOpponentCreated', potentialOpponent);
+    };
+  }
 }
 
 /**
@@ -779,10 +794,10 @@ export function useTownSettings() {
  * @returns a RPSChallenge object,
  *  representing the current settings of the current town
  */
-export function useChallengeSent(): PlayerController | undefined {
+export function useChallengeReceived(): PlayerController | undefined {
   const townController = useTownController();
   const [challenger, setChallenger] = useState<PlayerController>();
-
+  console.log(`got into challenge handler`);
   useEffect(() => {
     const challengeHandler = (rpsEvent: RPSChallenge) => {
       if (rpsEvent.challengee === townController.ourPlayer) {
@@ -847,10 +862,12 @@ export function useRPSGame(): RPS | undefined {
  * @return the potential opponent
  */
 export function usePotentialOpponent(): PlayerController | undefined {
+  console.log('starting usePotentialOpponent');
   const townController = useTownController();
   const [potentialOpponent, setPotentialOpponent] = useState<PlayerController>();
 
   useEffect(() => {
+    console.log('create challenge request called'); // FIXME
     const opponentHandler = (opponent: PlayerController) => {
       setPotentialOpponent(opponent);
     };

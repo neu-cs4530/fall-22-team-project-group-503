@@ -9,12 +9,12 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import React, { useCallback } from 'react';
-import { useChallengeSent } from '../../../classes/TownController';
+import { useChallengeReceived } from '../../../classes/TownController';
 import useTownController from '../../../hooks/useTownController';
 
 export default function AcceptChallengeRPS(): JSX.Element {
   const coveyTownController = useTownController();
-  const newPotentialChallenger = useChallengeSent();
+  const newPotentialChallenger = useChallengeReceived();
   const player = coveyTownController.ourPlayer;
 
   const closeModal = useCallback(() => {
@@ -71,7 +71,8 @@ export default function AcceptChallengeRPS(): JSX.Element {
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>
-          {player.userName} challenges you to a game of Rock Paper Scissors. Do you accept?
+          {newPotentialChallenger ? newPotentialChallenger.userName : 'ERROR'} challenges you to a
+          game of Rock Paper Scissors. Do you accept?
         </ModalHeader>
         <ModalCloseButton />
         <ModalFooter>
