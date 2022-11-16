@@ -505,10 +505,9 @@ export default class TownGameScene extends Phaser.Scene {
         .setOffset(0, 24);
       sprite.setInteractive();
       // sprite.on('pointerdown', () => console.log(`challenge ${player.userName} player here?`));
-      sprite.on(
-        'pointerdown',
-        this.coveyTownController.createChallengeRequestAgainstPlayer(player),
-      );
+      sprite.on('pointerdown', () => {
+        this.coveyTownController.createChallengeRequestAgainstPlayer(player);
+      });
       const label = this.add.text(
         player.location.x,
         player.location.y - 20,

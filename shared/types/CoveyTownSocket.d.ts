@@ -81,6 +81,8 @@ export interface ServerToClientEvents {
   rpsChallengeSent: (challenge: RPSChallenge) => void;
   rpsChallengeReceived: (challenge: RPSChallenge) => void;
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
+  rpsOpponentCreated: (player: PlayerController) => void;
+  rpsGameStarted: (rpsGame: RPS) => void;
 }
 
 export interface ClientToServerEvents {
@@ -89,5 +91,8 @@ export interface ClientToServerEvents {
   interactableUpdate: (update: Interactable) => void;
   scoreUpdate: (score: number) => void;
   rpsChallengeSent: (challenge: RPSChallenge) => void;
-  // rpsChallengeResponse: (challenge: RPSChallenge) => void;
+  rpsChallengeReceived: (challenge: RPSChallenge) => void;
+  rpsChallengeResponse: (challenge: RPSChallenge) => void;
+  rpsOpponentCreated: (player: PlayerController) => void;
+  rpsGameStarted: (rpsGame: RPS) => void;
 }

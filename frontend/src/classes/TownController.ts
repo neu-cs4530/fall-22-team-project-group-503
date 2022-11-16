@@ -5,8 +5,6 @@ import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import TypedEmitter from 'typed-emitter';
 import Interactable from '../components/Town/Interactable';
-import AcceptChallengeRPS from '../components/Town/interactables/AcceptChallengeRPS';
-import ChallengePlayerRPS from '../components/Town/interactables/ChallengePlayerRPS';
 import ViewingArea from '../components/Town/interactables/ViewingArea';
 import { LoginController } from '../contexts/LoginControllerContext';
 import { TownsService, TownsServiceClient } from '../generated/client';
@@ -112,7 +110,7 @@ export type TownEvents = {
   /**
    * This is subject to change, but when selecting a player to challenge (clicking on another avatar which triggers the confirmation popup), this event gets emitted
    */
-  rpsOpponentCreated: (player: PlayerController) => void;
+  rpsChallengeCreated: (player: PlayerController) => void;
 
   /**
    * An event that indicates that a game of RPS has been started, which is the parameter passed to the listener.
@@ -132,6 +130,12 @@ export type TownEvents = {
    * The challenge as well as if its been accepted or declined is passed as a parameter.
    */
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
+
+  /**
+   * An event that indicates that the current player has received a challenge from another player. This event is dispatched when another
+   * user clicks on this user's sprite and confirms they want to challenge them. The challenge is passed as a parameter.
+   */
+  rpsChallengeReceived: (challenge: RPSChallenge) => void;
 };
 
 /**
@@ -533,24 +537,43 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   /**
+   * Emit a challenge created event against the potatential opponent.
+   * @param potentialOpponent
+   */
+  createChallengeRequestAgainstPlayer(potentialOpponent: PlayerController) {
+    console.log(`create challenge request called against ${potentialOpponent.userName}`); // FIXME
+    this.emit('rpsChallengeCreated', potentialOpponent);
+  }
+  // createChallengeRequestAgainstPlayer(potentialOpponent: PlayerController): () => void {
+  //   return () => {
+  //     console.log(`create challenge request called against ${potentialOpponent.userName}`); // FIXME
+  //     this.emit('rpsChallengeCreated', potentialOpponent);
+  //   };
+
+  /**
    * Emit a challenge event for the current player to the given player
    *
    * @param player
    */
-  challengePlayer(player: PlayerController): () => void {
+  challengePlayer(player: PlayerController) /*: () => void*/ {
     console.log('challenginh the other player');
+    this.emit('rpsChallengeSent', {
+      challenger: this.ourPlayer,
+      challengee: player,
+      response: false,
+    });
     // this.emit('rpsChallengeSent', {
     //   challenger: this.ourPlayer,
     //   challengee: player,
     //   response: false,
     // });
-    return () => {
-      this.emit('rpsChallengeSent', {
-        challenger: this.ourPlayer,
-        challengee: player,
-        response: false,
-      });
-    };
+    // return () => {
+    //   this.emit('rpsChallengeSent', {
+    //     challenger: this.ourPlayer,
+    //     challengee: player,
+    //     response: false,
+    //   });
+    // };
   }
 
   /**
@@ -738,17 +761,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   private _playersByIDs(playerIDs: string[]): PlayerController[] {
     return this._playersInternal.filter(eachPlayer => playerIDs.includes(eachPlayer.id));
   }
-
-  /**
-   * Emit a challenge created event against the potatential opponent.
-   * @param potentialOpponent
-   */
-  createChallengeRequestAgainstPlayer(potentialOpponent: PlayerController): () => void {
-    return () => {
-      console.log(`create challenge request called against ${potentialOpponent.userName}`); // FIXME
-      this.emit('rpsOpponentCreated', potentialOpponent);
-    };
-  }
 }
 
 /**
@@ -871,9 +883,9 @@ export function usePotentialOpponent(): PlayerController | undefined {
     const opponentHandler = (opponent: PlayerController) => {
       setPotentialOpponent(opponent);
     };
-    townController.addListener('rpsOpponentCreated', opponentHandler);
+    townController.addListener('rpsChallengeCreated', opponentHandler);
     return () => {
-      townController.removeListener('rpsOpponentCreated', opponentHandler);
+      townController.removeListener('rpsChallengeCreated', opponentHandler);
     };
   }, [townController, setPotentialOpponent]);
   return potentialOpponent;
