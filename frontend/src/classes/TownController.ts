@@ -478,28 +478,34 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     });
 
     /**
-     * Once the challengee accepts the challenge, a game is started
+     * If the challengee accepts the challenge, a game is started
      */
     this._socket.on('rpsChallengeResponse', response => {
       // FIXME
       if (response.response) {
-        // this.emit('rpsGameStarted', this.startRPS(response));
         this.emit('rpsGameStarted', new RPS(response.challenger, response.challengee));
       }
     });
 
     /**
-     * send challenge
+     * If the current user receives a challenge from another player
+     */
+    // this._socket.on('rpsChallengeReceived', response => {
+    //   if (response.challengee === this.ourPlayer) {
+    //     this.emit('rpsChallengeReceived', response);
+    //   }
+    // });
+
+    /**
+     * A challenge sent event could be a recieved challenge
      */
     this._socket.on('rpsChallengeSent', challenge => {
-      this.emit('rpsChallengeSent', challenge);
+      if (challenge.challengee === this.ourPlayer) {
+        this.emit('rpsChallengeReceived', challenge);
+      } else {
+        this.emit('rpsChallengeSent', challenge);
+      }
     });
-
-    // this._socket.on('rpsChallengeReceived', challenge => {
-    //   AcceptChallengeRPS();
-    //   this.emit('rpsChallengeReceived', challenge);
-    //   this.challengePlayer
-    // });
   }
 
   /**
@@ -544,36 +550,26 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     console.log(`create challenge request called against ${potentialOpponent.userName}`); // FIXME
     this.emit('rpsChallengeCreated', potentialOpponent);
   }
-  // createChallengeRequestAgainstPlayer(potentialOpponent: PlayerController): () => void {
-  //   return () => {
-  //     console.log(`create challenge request called against ${potentialOpponent.userName}`); // FIXME
-  //     this.emit('rpsChallengeCreated', potentialOpponent);
-  //   };
 
   /**
    * Emit a challenge event for the current player to the given player
    *
    * @param player
    */
-  challengePlayer(player: PlayerController) /*: () => void*/ {
-    console.log('challenginh the other player');
+  challengePlayer(player: PlayerController) {
+    // emitting to local listeners
     this.emit('rpsChallengeSent', {
       challenger: this.ourPlayer,
       challengee: player,
       response: false,
     });
-    // this.emit('rpsChallengeSent', {
-    //   challenger: this.ourPlayer,
-    //   challengee: player,
-    //   response: false,
-    // });
-    // return () => {
-    //   this.emit('rpsChallengeSent', {
-    //     challenger: this.ourPlayer,
-    //     challengee: player,
-    //     response: false,
-    //   });
-    // };
+    // emitting to socket
+    this._socket.emit('rpsChallengeSent', {
+      challenger: this.ourPlayer,
+      challengee: player,
+      response: false,
+    });
+    console.log(`challenge to ${player} has been sent to socket`);
   }
 
   /**
@@ -797,6 +793,29 @@ export function useTownSettings() {
   return { friendlyName, isPubliclyListed };
 }
 
+// function to listen to 'rpsChallengeCreated' and return the potentialOpponent
+/**
+ * A react hook that retrieves the potential opponent. Relies on TownControllerContext.
+ * @return the potential opponent
+ */
+export function usePotentialOpponent(): PlayerController | undefined {
+  console.log('starting usePotentialOpponent');
+  const townController = useTownController();
+  const [potentialOpponent, setPotentialOpponent] = useState<PlayerController>();
+
+  useEffect(() => {
+    console.log('create challenge request called'); // FIXME
+    const opponentHandler = (opponent: PlayerController) => {
+      setPotentialOpponent(opponent);
+    };
+    townController.addListener('rpsChallengeCreated', opponentHandler);
+    return () => {
+      townController.removeListener('rpsChallengeCreated', opponentHandler);
+    };
+  }, [townController, setPotentialOpponent]);
+  return potentialOpponent;
+}
+
 /**
  * A react hook to show a player who just challenged them.
  *
@@ -809,16 +828,20 @@ export function useTownSettings() {
 export function useChallengeReceived(): PlayerController | undefined {
   const townController = useTownController();
   const [challenger, setChallenger] = useState<PlayerController>();
-  console.log(`got into challenge handler`);
+  console.log(`got into useChallenge hook`);
   useEffect(() => {
     const challengeHandler = (rpsEvent: RPSChallenge) => {
+      // FIXME either we check here if this is a challenge received OR we have the check in the socket.on and change the listener here to challengeReceived
       if (rpsEvent.challengee === townController.ourPlayer) {
         setChallenger(rpsEvent.challenger);
       }
+      // setChallenger(rpsEvent.challenger);
     };
     townController.addListener('rpsChallengeSent', challengeHandler);
+    // townController.addListener('rpsChallengeReceived', challengeHandler);
     return () => {
       townController.removeListener('rpsChallengeSent', challengeHandler);
+      // townController.removeListener('rpsChallengeReceived', challengeHandler);
     };
   }, [townController, setChallenger]);
   return challenger;
@@ -866,29 +889,6 @@ export function useRPSGame(): RPS | undefined {
     };
   }, [townController, setRPSGame]);
   return rpsGame;
-}
-
-// function to listen to 'rpsChallengeCreated' and return the potentialOpponent
-/**
- * A react hook that retrieves the potential opponent. Relies on TownControllerContext.
- * @return the potential opponent
- */
-export function usePotentialOpponent(): PlayerController | undefined {
-  console.log('starting usePotentialOpponent');
-  const townController = useTownController();
-  const [potentialOpponent, setPotentialOpponent] = useState<PlayerController>();
-
-  useEffect(() => {
-    console.log('create challenge request called'); // FIXME
-    const opponentHandler = (opponent: PlayerController) => {
-      setPotentialOpponent(opponent);
-    };
-    townController.addListener('rpsChallengeCreated', opponentHandler);
-    return () => {
-      townController.removeListener('rpsChallengeCreated', opponentHandler);
-    };
-  }, [townController, setPotentialOpponent]);
-  return potentialOpponent;
 }
 
 /**
