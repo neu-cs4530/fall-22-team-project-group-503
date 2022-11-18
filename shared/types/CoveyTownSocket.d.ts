@@ -69,6 +69,12 @@ export interface ViewingArea {
   elapsedTimeSec: number;
 }
 
+export type RPSChallenge = {
+  challenger: PlayerController;
+  challengee: PlayerController;
+  response?: boolean;
+};
+
 export interface ServerToClientEvents {
   playerMoved: (movedPlayer: Player) => void;
   playerDisconnect: (disconnectedPlayer: Player) => void;
@@ -81,7 +87,6 @@ export interface ServerToClientEvents {
   rpsChallengeSent: (challenge: RPSChallenge) => void;
   rpsChallengeReceived: (challenge: RPSChallenge) => void;
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
-  rpsOpponentCreated: (player: PlayerController) => void;
   rpsGameStarted: (rpsGame: RPS) => void;
 }
 
@@ -93,6 +98,5 @@ export interface ClientToServerEvents {
   rpsChallengeSent: (challenge: RPSChallenge) => void;
   rpsChallengeReceived: (challenge: RPSChallenge) => void;
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
-  rpsOpponentCreated: (player: PlayerController) => void;
   rpsGameStarted: (rpsGame: RPS) => void;
 }

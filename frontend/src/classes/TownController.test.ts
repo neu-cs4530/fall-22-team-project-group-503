@@ -16,12 +16,13 @@ import {
   PlayerLocation,
   ServerToClientEvents,
   TownJoinResponse,
+  RPSChallenge,
 } from '../types/CoveyTownSocket';
 import { isConversationArea, isViewingArea } from '../types/TypeUtils';
 import PlayerController from './PlayerController';
-import TownController, { RPSChallenge, TownEvents } from './TownController';
 import ViewingAreaController from './ViewingAreaController';
-
+import TownController from './TownController';
+import { TownEvents } from './TownController';
 /**
  * Mocks the socket-io client constructor such that it will always return the same
  * mockSocket instance. Returns that mockSocket instance to the caller of this function,

@@ -133,6 +133,13 @@ export default class Town {
       this._broadcastEmitter.emit('chatMessage', message);
     });
 
+    socket.on('rpsChallengeSent', challenge => {
+      console.log(
+        `got into Town.ts.... challenger: '${challenge.challenger.username}', challengee: '${challenge.challengee.username}'`,
+      );
+      this._broadcastEmitter.emit('rpsChallengeSent', challenge);
+    });
+
     // Register an event listener for the client socket: if the client updates their
     // location, inform the CoveyTownController
     socket.on('playerMovement', (movementData: PlayerLocation) => {
