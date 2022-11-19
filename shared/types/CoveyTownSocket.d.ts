@@ -70,8 +70,8 @@ export interface ViewingArea {
 }
 
 export type RPSChallenge = {
-  challenger: PlayerController;
-  challengee: PlayerController;
+  challenger: string;
+  challengee: string;
   response?: boolean;
 };
 

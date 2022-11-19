@@ -24,7 +24,7 @@ export default function AcceptChallengeRPS(): JSX.Element {
 
   const toast = useToast();
 
-  let isOpen = newPotentialChallenger !== undefined;
+  const isOpen = newPotentialChallenger !== undefined;
 
   const challengerUsername = coveyTownController.players.find(
     p => p.id === newPotentialChallenger,
@@ -69,7 +69,6 @@ export default function AcceptChallengeRPS(): JSX.Element {
     <Modal
       isOpen={isOpen}
       onClose={() => {
-        isOpen = false;
         closeModal();
         coveyTownController.unPause();
       }}>

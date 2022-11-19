@@ -589,10 +589,15 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    */
   public async startRPS(response: RPSChallenge): Promise<RPS | undefined> {
     if (response) {
-      const newGame = new RPS(response.challenger, response.challengee);
-      this.emit('rpsGameStarted', newGame);
-      console.log('got here to startRPS');
-      return newGame;
+      const challenger = this.players.find(p => p.id === response.challenger);
+      const challengee = this.players.find(p => p.id === response.challengee);
+
+      if (challenger !== undefined && challengee !== undefined) {
+        const newGame = new RPS(challenger, challengee);
+        this.emit('rpsGameStarted', newGame);
+        console.log('got here to startRPS');
+        return newGame;
+      }
     }
     return undefined;
   }
