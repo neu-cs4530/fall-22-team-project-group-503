@@ -20,7 +20,7 @@ export default function ChallengePlayerRPS(): JSX.Element {
   // get the challenge player (from TownGameScene.ts line 503 `createPlayerSprites`)
   // set to `potentialOpponent`
 
-  const isOpen = potentialOpponent !== undefined;
+  let isOpen = potentialOpponent !== undefined;
   const closeModal = useCallback(() => {
     coveyTownController.unPause();
     close();
@@ -67,6 +67,7 @@ export default function ChallengePlayerRPS(): JSX.Element {
       isOpen={isOpen}
       onClose={() => {
         closeModal();
+        isOpen = false;
         coveyTownController.unPause();
       }}>
       <ModalOverlay />
@@ -77,7 +78,13 @@ export default function ChallengePlayerRPS(): JSX.Element {
         </ModalHeader>
         <ModalCloseButton />
         <ModalFooter>
-          <Button colorScheme='blue' mr={3} onClick={createRPSChallenge}>
+          <Button
+            colorScheme='blue'
+            mr={3}
+            onClick={() => {
+              createRPSChallenge();
+              isOpen = false;
+            }}>
             Challenge
           </Button>
           <Button onClick={closeModal}>Cancel</Button>

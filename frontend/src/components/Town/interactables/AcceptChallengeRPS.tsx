@@ -24,7 +24,11 @@ export default function AcceptChallengeRPS(): JSX.Element {
 
   const toast = useToast();
 
-  const isOpen = newPotentialChallenger !== undefined;
+  let isOpen = newPotentialChallenger !== undefined;
+
+  const challengerUsername = coveyTownController.players.find(
+    p => p.id === newPotentialChallenger,
+  )?.userName;
 
   const acceptRPSChallenge = useCallback(async () => {
     try {
@@ -65,14 +69,14 @@ export default function AcceptChallengeRPS(): JSX.Element {
     <Modal
       isOpen={isOpen}
       onClose={() => {
+        isOpen = false;
         closeModal();
         coveyTownController.unPause();
       }}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>
-          {newPotentialChallenger ? newPotentialChallenger.userName : 'ERROR'} challenges you to a
-          game of Rock Paper Scissors. Do you accept?
+          {challengerUsername} challenges you to a game of Rock Paper Scissors. Do you accept?
         </ModalHeader>
         <ModalCloseButton />
         <ModalFooter>

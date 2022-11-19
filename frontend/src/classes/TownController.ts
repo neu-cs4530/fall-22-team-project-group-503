@@ -488,10 +488,12 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * send challenge
      */
     this._socket.on('rpsChallengeSent', challenge => {
+      console.log(`GOT HERE THIS PLAYER IS ${this.ourPlayer.userName}. id: ${this.ourPlayer.id}`);
       console.log(
-        `challenge sent event occured on socket challlengee: ${challenge.challengee.userName} challenger: ${challenge.challenger.userName}`,
+        `challenge sent event occured on socket challlengee: ${challenge.challengee} challenger: ${challenge.challenger}`,
       );
-      if (challenge.challengee.userID === this.userID) {
+      if (challenge.challengee === this.userID) {
+        console.log(`here12321`);
         this.emit('rpsChallengeReceived', challenge);
       } else {
         console.log(`recieved an 'rpsChallengeSent' event`);
@@ -555,11 +557,13 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param player
    */
   challengePlayer(player: PlayerController) {
-    console.log('challenge the other player');
+    console.log(
+      `challenge the other player. Our player ${this.ourPlayer.userName} OTHER: ${player.userName}`,
+    );
     this._socket.emit('rpsChallengeSent', {
-      challenger: this.ourPlayer,
-      challengee: player,
-      response: false,
+      challenger: this.ourPlayer.id,
+      challengee: player.id,
+      response: true,
     });
     // this._socket.emit('rpsChallengeSent', {
     //   challenger: this.ourPlayer,
@@ -587,6 +591,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     if (response) {
       const newGame = new RPS(response.challenger, response.challengee);
       this.emit('rpsGameStarted', newGame);
+      console.log('got here to startRPS');
       return newGame;
     }
     return undefined;
@@ -798,17 +803,17 @@ export function useTownSettings() {
  * @returns a RPSChallenge object,
  *  representing the current settings of the current town
  */
-export function useChallengeReceived(): PlayerController | undefined {
+export function useChallengeReceived(): string | undefined {
   const townController = useTownController();
-  const [challenger, setChallenger] = useState<PlayerController>();
+  const [challenger, setChallenger] = useState<string>();
   console.log(`got into useChallengeReceived hook`);
   useEffect(() => {
     console.log('got into use effect for "useChallengeRecieved"');
     const challengeHandler = (rpsEvent: RPSChallenge) => {
       console.log(
-        `got into the challengeHandler our player is' ${rpsEvent.challenger.userName}' and the opponent is '${rpsEvent.challengee.userName}'`,
+        `got into the challengeHandler our player is' ${rpsEvent.challenger}' and the opponent is '${rpsEvent.challengee}'`,
       );
-      if (rpsEvent.challengee === townController.ourPlayer) {
+      if (rpsEvent.challengee === townController.ourPlayer.id) {
         setChallenger(rpsEvent.challenger);
       }
     };
@@ -816,7 +821,7 @@ export function useChallengeReceived(): PlayerController | undefined {
     return () => {
       townController.removeListener('rpsChallengeReceived', challengeHandler);
     };
-  }, [townController, setChallenger]);
+  }, [townController, setChallenger, challenger]);
   return challenger;
 }
 

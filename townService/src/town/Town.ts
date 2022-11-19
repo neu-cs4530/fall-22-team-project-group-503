@@ -11,6 +11,7 @@ import {
   CoveyTownSocket,
   Interactable,
   PlayerLocation,
+  RPSChallenge,
   ServerToClientEvents,
   SocketData,
   ViewingArea as ViewingAreaModel,
@@ -133,7 +134,7 @@ export default class Town {
       this._broadcastEmitter.emit('chatMessage', message);
     });
 
-    socket.on('rpsChallengeSent', challenge => {
+    socket.on('rpsChallengeSent', (challenge: RPSChallenge) => {
       console.log(
         `got into Town.ts.... challenger: '${challenge.challenger.username}', challengee: '${challenge.challengee.username}'`,
       );
