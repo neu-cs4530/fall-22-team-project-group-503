@@ -492,8 +492,8 @@ describe('TownController', () => {
       const challengePlayerSpy = jest.spyOn(testController, 'challengePlayer');
       challengePlayerSpy.mockImplementation((opponent: PlayerController) => {
         testController.emit('rpsChallengeSent', {
-          challenger: opponent,
-          challengee: opponent,
+          challenger: opponent.id,
+          challengee: opponent.id,
         });
       });
       testController.challengePlayer(potentialOpponent);
@@ -502,8 +502,8 @@ describe('TownController', () => {
     });
     it('Emits rpsChallengeReceived when a RPS challenge has been received by the current player', () => {
       const rpsChallenge: RPSChallenge = {
-        challenger: potentialOpponent,
-        challengee: potentialOpponent,
+        challenger: potentialOpponent.id,
+        challengee: potentialOpponent.id,
       };
       // for sake of testing, challenging ourselves to a game of rps to see if challenge is received after being sent.
       emitEventAndExpectListenerFiring('rpsChallengeSent', rpsChallenge, 'rpsChallengeReceived');
@@ -512,8 +512,8 @@ describe('TownController', () => {
       it('Emits rpsChallengeResponse when a player has responded to a challenge created by this player', () => {});
       it('Starts a game of rps if the response is an accepted challenge', () => {
         const rpsChallengeAccepted: RPSChallenge = {
-          challenger: potentialOpponent,
-          challengee: potentialOpponent,
+          challenger: potentialOpponent.id,
+          challengee: potentialOpponent.id,
           response: true,
         };
         emitEventAndExpectListenerFiring(
