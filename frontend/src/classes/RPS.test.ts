@@ -41,53 +41,53 @@ describe('[T2] ConversationAreaController', () => {
       expect(mockListeners.statusChange).toBeCalled();
     });
     it('Returns true if status is finished if game finished', () => {
-      rps.calculateWinner(Answer.ROCK, Answer.PAPER);
+      rps.calculateWinnerFromMoves(Answer.ROCK, Answer.PAPER);
       expect(rps.status).toBe(GameStatus.FINISHED);
       expect(mockListeners.statusChange).toBeCalled();
     });
     it('Returns true if status is finished if game finished with draw result', () => {
-      rps.calculateWinner(Answer.ROCK, Answer.ROCK);
+      rps.calculateWinnerFromMoves(Answer.ROCK, Answer.ROCK);
       expect(rps.status).toBe(GameStatus.FINISHED);
       expect(mockListeners.statusChange).toBeCalled();
     });
   });
   describe('calculate winner', () => {
     it('returns player one if player one wins with paper', () => {
-      expect(rps.calculateWinner(Answer.PAPER, Answer.ROCK)).toEqual(player1);
+      expect(rps.calculateWinnerFromMoves(Answer.PAPER, Answer.ROCK)).toEqual(player1);
       expect(mockListeners.playerWon).toBeCalled();
     });
     it('returns player one if player one wins with rock', () => {
-      expect(rps.calculateWinner(Answer.ROCK, Answer.SCISSORS)).toEqual(player1);
+      expect(rps.calculateWinnerFromMoves(Answer.ROCK, Answer.SCISSORS)).toEqual(player1);
       expect(mockListeners.playerWon).toBeCalled();
     });
     it('returns player one if player one wins with scissors', () => {
-      expect(rps.calculateWinner(Answer.SCISSORS, Answer.PAPER)).toEqual(player1);
+      expect(rps.calculateWinnerFromMoves(Answer.SCISSORS, Answer.PAPER)).toEqual(player1);
       expect(mockListeners.playerWon).toBeCalled();
     });
     it('returns player two if player two wins with paper', () => {
-      expect(rps.calculateWinner(Answer.ROCK, Answer.PAPER)).toEqual(player2);
+      expect(rps.calculateWinnerFromMoves(Answer.ROCK, Answer.PAPER)).toEqual(player2);
       expect(mockListeners.playerWon).toBeCalled();
     });
     it('returns player two if player two wins with rock', () => {
-      expect(rps.calculateWinner(Answer.SCISSORS, Answer.ROCK)).toEqual(player2);
+      expect(rps.calculateWinnerFromMoves(Answer.SCISSORS, Answer.ROCK)).toEqual(player2);
       expect(mockListeners.playerWon).toBeCalled();
     });
     it('returns player two if player two wins with scissors', () => {
-      expect(rps.calculateWinner(Answer.PAPER, Answer.SCISSORS)).toEqual(player2);
+      expect(rps.calculateWinnerFromMoves(Answer.PAPER, Answer.SCISSORS)).toEqual(player2);
       expect(mockListeners.playerWon).toBeCalled();
     });
   });
   describe('draw', () => {
     it('returns draw if players drawed with paper', () => {
-      expect(rps.calculateWinner(Answer.PAPER, Answer.PAPER)).toBeUndefined();
+      expect(rps.calculateWinnerFromMoves(Answer.PAPER, Answer.PAPER)).toBeUndefined();
       expect(mockListeners.playersDrawed).toBeCalled();
     });
     it('returns draw if players drawed with scissors', () => {
-      expect(rps.calculateWinner(Answer.SCISSORS, Answer.SCISSORS)).toBeUndefined();
+      expect(rps.calculateWinnerFromMoves(Answer.SCISSORS, Answer.SCISSORS)).toBeUndefined();
       expect(mockListeners.playersDrawed).toBeCalled();
     });
     it('returns draw if players drawed with rock', () => {
-      expect(rps.calculateWinner(Answer.ROCK, Answer.ROCK)).toBeUndefined();
+      expect(rps.calculateWinnerFromMoves(Answer.ROCK, Answer.ROCK)).toBeUndefined();
       expect(mockListeners.playersDrawed).toBeCalled();
     });
   });
