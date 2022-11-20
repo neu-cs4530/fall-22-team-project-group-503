@@ -23,6 +23,10 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
 
   private readonly _playerTwo: string;
 
+  private _playerOneMove: Answer | undefined;
+
+  private _playerTwoMove: Answer | undefined;
+
   /**
    * Creates a new RPS game.
    */
@@ -44,6 +48,14 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     this._status = newStatus;
   }
 
+  set playerOneMove(answer: Answer) {
+    this._playerOneMove = answer;
+  }
+
+  set playerTwoMove(answer: Answer) {
+    this._playerTwoMove = answer;
+  }
+
   get playerOne(): string {
     return this._playerOne;
   }
@@ -57,13 +69,24 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     this.emit('statusChange', GameStatus.STARTED);
   }
 
+  public selectMove(player: string, move: Answer) {
+    if (this.playerOne === player) {
+      this._playerOneMove = move;
+    } else if (this.playerTwo === player) {
+      this._playerTwoMove = move;
+    }
+  }
+
   /**
    * Determines the winner of a game of RPS.
    * @param playerOneAnswer player one's choice of RPS.
    * @param playerTwoAnswer player two's choice of RPS.
    * @returns the winner of the game.
    */
-  public calculateWinner(playerOneAnswer: Answer, playerTwoAnswer: Answer): string | undefined {
+  public calculateWinnerFromMoves(
+    playerOneAnswer: Answer,
+    playerTwoAnswer: Answer,
+  ): string | undefined {
     let playerWon: string | undefined;
     if (playerOneAnswer === Answer.ROCK) {
       if (playerTwoAnswer === Answer.ROCK) {
@@ -93,11 +116,19 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     }
     if (playerWon) {
       this.emit('playerWon', playerWon);
+      this.emit('playerLost', this.playerOne === playerWon ? this.playerTwo : this.playerOne);
     } else {
       this.emit('playersDrawed', DRAW);
     }
     this.status = GameStatus.FINISHED;
     return playerWon;
+  }
+
+  public calculateWinner(): string | undefined {
+    if (this._playerOneMove !== undefined && this._playerTwoMove !== undefined) {
+      return this.calculateWinnerFromMoves(this._playerOneMove, this._playerTwoMove);
+    }
+    return undefined;
   }
 
   /**
@@ -107,7 +138,7 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
    * @returns the loser of the game.
    */
   public calculateLoser(playerOneAnswer: Answer, playerTwoAnswer: Answer): string | undefined {
-    const winner = this.calculateWinner(playerOneAnswer, playerTwoAnswer);
+    const winner = this.calculateWinnerFromMoves(playerOneAnswer, playerTwoAnswer);
     if (winner) {
       if (winner === this.playerOne) {
         this.emit('playerLost', this.playerTwo);

@@ -572,7 +572,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
 
       if (challenger !== undefined && challengee !== undefined) {
         const newGame = new RPS(challenger.id, challengee.id);
-        this.emit('rpsGameStarted', newGame);
+        this.emit('rpsGameStarted', newGame); // we need to make sure this works and emits correctly, since the PlayerControlleres did not work when emitted
         return newGame;
       }
     }
@@ -827,22 +827,24 @@ export function useChallengeResponse() {
 }
 
 /**
- * A react hook that retrieves a game of RPS. Relies on TownControllerContext.
+ * A react hook that retrieves a game of RPS that this player is a part of. Relies on TownControllerContext.
  * @return the RPS game
  */
-export function useRPSGame(): RPS | undefined {
+export function useRPSGame(player: string): RPS | undefined {
   const townController = useTownController();
   const [rpsGame, setRPSGame] = useState<RPS>();
 
   useEffect(() => {
     const rpsHandler = (updatedGame: RPS) => {
-      setRPSGame(updatedGame);
+      if (updatedGame.playerOne === player || updatedGame.playerTwo === player) {
+        setRPSGame(updatedGame);
+      }
     };
     townController.addListener('rpsGameStarted', rpsHandler);
     return () => {
       townController.removeListener('rpsGameStarted', rpsHandler);
     };
-  }, [townController, setRPSGame]);
+  }, [townController, setRPSGame, player]);
   return rpsGame;
 }
 
@@ -1054,3 +1056,5 @@ export function usePlayersInVideoCall(): PlayerController[] {
   }, [townController, setPlayersInCall]);
   return playersInCall;
 }
+
+// we need some hook to respond to 'playerWon' and 'playerLost' event and for a toast to popup depending on what happens...
