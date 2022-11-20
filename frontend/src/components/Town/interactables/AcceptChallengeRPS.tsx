@@ -40,8 +40,6 @@ export default function AcceptChallengeRPS(): JSX.Element {
         });
       }
 
-      // add startRPS game in TownController, it takes in a response, emits the new game...
-
       toast({
         title: 'Challenge Accepted!',
         status: 'success',

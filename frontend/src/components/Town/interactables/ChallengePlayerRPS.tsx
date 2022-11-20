@@ -24,11 +24,6 @@ export default function ChallengePlayerRPS(): JSX.Element {
   const toast = useToast();
 
   const createRPSChallenge = useCallback(async () => {
-    console.log(
-      `beginning "createRPSChallenge" between ${coveyTownController.ourPlayer.userName} and ${
-        potentialOpponent ? potentialOpponent.userName : 'undefined'
-      }`,
-    );
     try {
       if (potentialOpponent) {
         await coveyTownController.challengePlayer(potentialOpponent);

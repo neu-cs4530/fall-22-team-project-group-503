@@ -135,9 +135,6 @@ export default class Town {
     });
 
     socket.on('rpsChallengeSent', (challenge: RPSChallenge) => {
-      console.log(
-        `got into Town.ts.... challenger: '${challenge.challenger.username}', challengee: '${challenge.challengee.username}'`,
-      );
       this._broadcastEmitter.emit('rpsChallengeSent', challenge);
     });
 
@@ -323,7 +320,7 @@ export default class Town {
   public disconnectAllPlayers(): void {
     this._broadcastEmitter.emit('townClosing');
     this._connectedSockets.forEach(eachSocket => eachSocket.disconnect(true));
-  }
+  } 
 
   /**
    * Initializes the town's state from a JSON map, setting the "interactables" property of this town
