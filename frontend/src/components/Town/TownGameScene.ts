@@ -31,11 +31,6 @@ export default class TownGameScene extends Phaser.Scene {
   addOverlapExit(interactable: Interactable, callback: () => void) {
     this._pendingOverlapExits.set(interactable, callback);
   }
-  // TODO
-  /*
-   * when coding challenge dialog
-   * on accept or reject, emit challengeResponse using this.towncontroller, use useChallenger hook for challlenger, ourPlayer for challengee
-   */
 
   private _players: PlayerController[] = [];
 
