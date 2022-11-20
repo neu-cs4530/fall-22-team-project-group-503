@@ -479,7 +479,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     this._socket.on('rpsChallengeResponse', response => {
       // FIXME
       if (response.response) {
-        // this.emit('rpsGameStarted', this.startRPS(response));
         this.emit('rpsGameStarted', new RPS(response.challenger, response.challengee));
       }
     });
@@ -488,24 +487,12 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * send challenge
      */
     this._socket.on('rpsChallengeSent', challenge => {
-      console.log(`GOT HERE THIS PLAYER IS ${this.ourPlayer.userName}. id: ${this.ourPlayer.id}`);
-      console.log(
-        `challenge sent event occured on socket challlengee: ${challenge.challengee} challenger: ${challenge.challenger}`,
-      );
       if (challenge.challengee === this.userID) {
-        console.log(`here12321`);
         this.emit('rpsChallengeReceived', challenge);
       } else {
-        console.log(`recieved an 'rpsChallengeSent' event`);
         this.emit('rpsChallengeSent', challenge);
       }
     });
-
-    // this._socket.on('rpsChallengeReceived', challenge => {
-    //   AcceptChallengeRPS();
-    //   this.emit('rpsChallengeReceived', challenge);
-    //   this.challengePlayer
-    // });
   }
 
   /**
@@ -547,7 +534,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param potentialOpponent
    */
   createChallengeRequestAgainstPlayer(potentialOpponent: PlayerController) {
-    console.log(`create challenge request called against ${potentialOpponent.userName}`); // FIXME
     this.emit('rpsChallengeCreated', potentialOpponent);
   }
 
@@ -557,19 +543,11 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
    * @param player
    */
   challengePlayer(player: PlayerController) {
-    console.log(
-      `challenge the other player. Our player ${this.ourPlayer.userName} OTHER: ${player.userName}`,
-    );
     this._socket.emit('rpsChallengeSent', {
       challenger: this.ourPlayer.id,
       challengee: player.id,
       response: true,
     });
-    // this._socket.emit('rpsChallengeSent', {
-    //   challenger: this.ourPlayer,
-    //   challengee: player,
-    //   response: false,
-    // });
   }
 
   /**
@@ -593,9 +571,8 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       const challengee = this.players.find(p => p.id === response.challengee);
 
       if (challenger !== undefined && challengee !== undefined) {
-        const newGame = new RPS(challenger, challengee);
+        const newGame = new RPS(challenger.id, challengee.id);
         this.emit('rpsGameStarted', newGame);
-        console.log('got here to startRPS');
         return newGame;
       }
     }
@@ -811,13 +788,8 @@ export function useTownSettings() {
 export function useChallengeReceived(): string | undefined {
   const townController = useTownController();
   const [challenger, setChallenger] = useState<string>();
-  console.log(`got into useChallengeReceived hook`);
   useEffect(() => {
-    console.log('got into use effect for "useChallengeRecieved"');
     const challengeHandler = (rpsEvent: RPSChallenge) => {
-      console.log(
-        `got into the challengeHandler our player is' ${rpsEvent.challenger}' and the opponent is '${rpsEvent.challengee}'`,
-      );
       if (rpsEvent.challengee === townController.ourPlayer.id) {
         setChallenger(rpsEvent.challenger);
       }
@@ -880,12 +852,10 @@ export function useRPSGame(): RPS | undefined {
  * @return the potential opponent
  */
 export function usePotentialOpponent(): PlayerController | undefined {
-  console.log('starting usePotentialOpponent');
   const townController = useTownController();
   const [potentialOpponent, setPotentialOpponent] = useState<PlayerController>();
 
   useEffect(() => {
-    console.log('create challenge request called'); // FIXME
     const opponentHandler = (opponent: PlayerController) => {
       setPotentialOpponent(opponent);
     };

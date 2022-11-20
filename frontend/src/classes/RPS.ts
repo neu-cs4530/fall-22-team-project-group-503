@@ -8,8 +8,8 @@ const DRAW = 'draw';
 
 export type RPSEvents = {
   statusChange: (newStatus: GameStatus) => void;
-  playerWon: (player: PlayerController) => void;
-  playerLost: (player: PlayerController) => void;
+  playerWon: (player: string) => void;
+  playerLost: (player: string) => void;
   playersDrawed: (draw: string) => void;
 };
 
@@ -19,14 +19,14 @@ export type RPSEvents = {
 export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEvents>) {
   private _status: GameStatus;
 
-  private readonly _playerOne: PlayerController;
+  private readonly _playerOne: string;
 
-  private readonly _playerTwo: PlayerController;
+  private readonly _playerTwo: string;
 
   /**
    * Creates a new RPS game.
    */
-  constructor(playerOne: PlayerController, playerTwo: PlayerController) {
+  constructor(playerOne: string, playerTwo: string) {
     super();
     this._playerOne = playerOne;
     this._playerTwo = playerTwo;
@@ -44,11 +44,11 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     this._status = newStatus;
   }
 
-  get playerOne(): PlayerController {
+  get playerOne(): string {
     return this._playerOne;
   }
 
-  get playerTwo(): PlayerController {
+  get playerTwo(): string {
     return this._playerTwo;
   }
 
@@ -63,11 +63,8 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
    * @param playerTwoAnswer player two's choice of RPS.
    * @returns the winner of the game.
    */
-  public calculateWinner(
-    playerOneAnswer: Answer,
-    playerTwoAnswer: Answer,
-  ): PlayerController | undefined {
-    let playerWon: PlayerController | undefined;
+  public calculateWinner(playerOneAnswer: Answer, playerTwoAnswer: Answer): string | undefined {
+    let playerWon: string | undefined;
     if (playerOneAnswer === Answer.ROCK) {
       if (playerTwoAnswer === Answer.ROCK) {
         playerWon = undefined;
@@ -109,10 +106,7 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
    * @param playerTwoAnswer player two's choice of RPS.
    * @returns the loser of the game.
    */
-  public calculateLoser(
-    playerOneAnswer: Answer,
-    playerTwoAnswer: Answer,
-  ): PlayerController | undefined {
+  public calculateLoser(playerOneAnswer: Answer, playerTwoAnswer: Answer): string | undefined {
     const winner = this.calculateWinner(playerOneAnswer, playerTwoAnswer);
     if (winner) {
       if (winner === this.playerOne) {

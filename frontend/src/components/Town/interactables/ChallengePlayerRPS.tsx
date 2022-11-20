@@ -15,17 +15,10 @@ import useTownController from '../../../hooks/useTownController';
 export default function ChallengePlayerRPS(): JSX.Element {
   const coveyTownController = useTownController();
   const potentialOpponent = usePotentialOpponent();
-  //   const [player, setPlayer] = useState<PlayerController>(coveyTownController.ourPlayer);
-
-  // get the challenge player (from TownGameScene.ts line 503 `createPlayerSprites`)
-  // set to `potentialOpponent`
-
   let isOpen = potentialOpponent !== undefined;
   const closeModal = useCallback(() => {
     coveyTownController.unPause();
     close();
-    // potentialOpponent = undefined;
-    // potentialOpponent = usePotentialOpponent();
   }, [coveyTownController]);
 
   const toast = useToast();

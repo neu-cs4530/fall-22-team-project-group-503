@@ -34,7 +34,7 @@ export default function AcceptChallengeRPS(): JSX.Element {
     try {
       if (newPotentialChallenger) {
         await coveyTownController.startRPS({
-          challengee: player,
+          challengee: player.id,
           challenger: newPotentialChallenger,
           response: true,
         });
