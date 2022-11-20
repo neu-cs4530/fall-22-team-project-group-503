@@ -320,7 +320,7 @@ export default class Town {
   public disconnectAllPlayers(): void {
     this._broadcastEmitter.emit('townClosing');
     this._connectedSockets.forEach(eachSocket => eachSocket.disconnect(true));
-  } 
+  }
 
   /**
    * Initializes the town's state from a JSON map, setting the "interactables" property of this town
