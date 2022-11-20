@@ -16,12 +16,13 @@ import {
   PlayerLocation,
   ServerToClientEvents,
   TownJoinResponse,
+  RPSChallenge,
 } from '../types/CoveyTownSocket';
 import { isConversationArea, isViewingArea } from '../types/TypeUtils';
 import PlayerController from './PlayerController';
-import TownController, { TownEvents } from './TownController';
 import ViewingAreaController from './ViewingAreaController';
-
+import TownController from './TownController';
+import { TownEvents } from './TownController';
 /**
  * Mocks the socket-io client constructor such that it will always return the same
  * mockSocket instance. Returns that mockSocket instance to the caller of this function,
@@ -458,5 +459,69 @@ describe('TownController', () => {
   it('Disconnects the socket and clears the coveyTownController when disconnection', async () => {
     emitEventAndExpectListenerFiring('townClosing', undefined, 'disconnect');
     expect(mockLoginController.setTownController).toBeCalledWith(null);
+  });
+  describe('RPS Emitters', () => {
+    // const mockTownController = mock<TownController>();
+    const mockRPSListeners = mock<TownEvents>();
+    const potentialOpponent = new PlayerController(nanoid(), nanoid(), {
+      x: 1,
+      y: 1,
+      rotation: 'back',
+      moving: false,
+    });
+
+    beforeEach(() => {
+      mockClear(mockRPSListeners.rpsChallengeCreated);
+      mockClear(mockRPSListeners.rpsChallengeSent);
+      mockClear(mockRPSListeners.rpsChallengeReceived);
+      mockClear(mockRPSListeners.rpsChallengeResponse);
+      mockClear(mockRPSListeners.rpsGameStarted);
+      testController.addListener('rpsChallengeCreated', mockRPSListeners.rpsChallengeCreated);
+      testController.addListener('rpsChallengeSent', mockRPSListeners.rpsChallengeSent);
+      testController.addListener('rpsChallengeReceived', mockRPSListeners.rpsChallengeSent);
+      testController.addListener('rpsChallengeResponse', mockRPSListeners.rpsChallengeResponse);
+      testController.addListener('rpsGameStarted', mockRPSListeners.rpsGameStarted);
+    });
+    it('Emits rpsOpponentCreated when a rps challenge request has been created by the current player', () => {
+      testController.createChallengeRequestAgainstPlayer(potentialOpponent);
+      expect(mockRPSListeners.rpsChallengeCreated).toBeCalledWith(potentialOpponent);
+    });
+    it('Emits rpsChallengeSent when a rps challenge has been sent by the current player to another player', () => {
+      // a mock implementation of challengePlayer() because the method uses private "_ourPlayer" value from
+      // TownController and that value is initially undefined and cannot directly be set.
+      const challengePlayerSpy = jest.spyOn(testController, 'challengePlayer');
+      challengePlayerSpy.mockImplementation((opponent: PlayerController) => {
+        testController.emit('rpsChallengeSent', {
+          challenger: opponent.id,
+          challengee: opponent.id,
+        });
+      });
+      testController.challengePlayer(potentialOpponent);
+      expect(challengePlayerSpy).toHaveBeenCalled();
+      expect(mockRPSListeners.rpsChallengeSent).toBeCalledTimes(1);
+    });
+    it('Emits rpsChallengeReceived when a RPS challenge has been received by the current player', () => {
+      const rpsChallenge: RPSChallenge = {
+        challenger: potentialOpponent.id,
+        challengee: potentialOpponent.id,
+      };
+      // for sake of testing, challenging ourselves to a game of rps to see if challenge is received after being sent.
+      emitEventAndExpectListenerFiring('rpsChallengeSent', rpsChallenge, 'rpsChallengeReceived');
+    });
+    describe('rps challenge responses', () => {
+      it('Emits rpsChallengeResponse when a player has responded to a challenge created by this player', () => {});
+      it('Starts a game of rps if the response is an accepted challenge', () => {
+        const rpsChallengeAccepted: RPSChallenge = {
+          challenger: potentialOpponent.id,
+          challengee: potentialOpponent.id,
+          response: true,
+        };
+        emitEventAndExpectListenerFiring(
+          'rpsChallengeReceived',
+          rpsChallengeAccepted,
+          'rpsGameStarted',
+        );
+      });
+    });
   });
 });

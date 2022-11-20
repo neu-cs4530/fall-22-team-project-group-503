@@ -24,7 +24,7 @@ describe('[T2] ConversationAreaController', () => {
       rotation: 'back',
       moving: true,
     });
-    rps = new RPS(player1, player2);
+    rps = new RPS(player1.id, player2.id);
     mockClear(mockListeners.statusChange);
     mockClear(mockListeners.playerWon);
     mockClear(mockListeners.playerLost);

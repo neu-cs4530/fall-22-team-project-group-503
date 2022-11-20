@@ -11,6 +11,7 @@ import {
   CoveyTownSocket,
   Interactable,
   PlayerLocation,
+  RPSChallenge,
   ServerToClientEvents,
   SocketData,
   ViewingArea as ViewingAreaModel,
@@ -131,6 +132,10 @@ export default class Town {
     // Set up a listener to forward all chat messages to all clients in the town
     socket.on('chatMessage', (message: ChatMessage) => {
       this._broadcastEmitter.emit('chatMessage', message);
+    });
+
+    socket.on('rpsChallengeSent', (challenge: RPSChallenge) => {
+      this._broadcastEmitter.emit('rpsChallengeSent', challenge);
     });
 
     // Register an event listener for the client socket: if the client updates their

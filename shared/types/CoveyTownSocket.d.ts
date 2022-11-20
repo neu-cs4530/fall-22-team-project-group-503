@@ -69,6 +69,12 @@ export interface ViewingArea {
   elapsedTimeSec: number;
 }
 
+export type RPSChallenge = {
+  challenger: string;
+  challengee: string;
+  response?: boolean;
+};
+
 export interface ServerToClientEvents {
   playerMoved: (movedPlayer: Player) => void;
   playerDisconnect: (disconnectedPlayer: Player) => void;
@@ -78,6 +84,10 @@ export interface ServerToClientEvents {
   townClosing: () => void;
   chatMessage: (message: ChatMessage) => void;
   interactableUpdate: (interactable: Interactable) => void;
+  rpsChallengeSent: (challenge: RPSChallenge) => void;
+  rpsChallengeReceived: (challenge: RPSChallenge) => void;
+  rpsChallengeResponse: (challenge: RPSChallenge) => void;
+  rpsGameStarted: (rpsGame: RPS) => void;
 }
 
 export interface ClientToServerEvents {
@@ -85,4 +95,8 @@ export interface ClientToServerEvents {
   playerMovement: (movementData: PlayerLocation) => void;
   interactableUpdate: (update: Interactable) => void;
   scoreUpdate: (score: number) => void;
+  rpsChallengeSent: (challenge: RPSChallenge) => void;
+  rpsChallengeReceived: (challenge: RPSChallenge) => void;
+  rpsChallengeResponse: (challenge: RPSChallenge) => void;
+  rpsGameStarted: (rpsGame: RPS) => void;
 }

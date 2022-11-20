@@ -496,6 +496,10 @@ export default class TownGameScene extends Phaser.Scene {
         .sprite(player.location.x, player.location.y, 'atlas', 'misa-front')
         .setSize(30, 40)
         .setOffset(0, 24);
+      sprite.setInteractive();
+      sprite.on('pointerdown', () => {
+        this.coveyTownController.createChallengeRequestAgainstPlayer(player);
+      });
       const label = this.add.text(
         player.location.x,
         player.location.y - 20,
