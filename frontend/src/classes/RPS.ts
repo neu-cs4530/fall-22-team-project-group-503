@@ -144,4 +144,10 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     }
     return winner;
   }
+
+  public updateFrom(newRPS: RPS) {
+    this._status = newRPS.status;
+    this._playerOneMove = newRPS.playerOneMove;
+    this._playerTwoMove = newRPS.playerTwoMove;
+  }
 }
