@@ -75,6 +75,12 @@ export type RPSChallenge = {
   response?: boolean;
 };
 
+export type RPS = {
+  playerOne: string;
+  playerTwo: string;
+  status?: GameStatus;
+};
+
 export interface ServerToClientEvents {
   playerMoved: (movedPlayer: Player) => void;
   playerDisconnect: (disconnectedPlayer: Player) => void;
