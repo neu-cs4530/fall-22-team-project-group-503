@@ -475,12 +475,12 @@ describe('TownController', () => {
       mockClear(mockRPSListeners.rpsChallengeSent);
       mockClear(mockRPSListeners.rpsChallengeReceived);
       mockClear(mockRPSListeners.rpsChallengeResponse);
-      mockClear(mockRPSListeners.rpsGameStarted);
+      mockClear(mockRPSListeners.rpsGameChanged);
       testController.addListener('rpsChallengeCreated', mockRPSListeners.rpsChallengeCreated);
       testController.addListener('rpsChallengeSent', mockRPSListeners.rpsChallengeSent);
       testController.addListener('rpsChallengeReceived', mockRPSListeners.rpsChallengeSent);
       testController.addListener('rpsChallengeResponse', mockRPSListeners.rpsChallengeResponse);
-      testController.addListener('rpsGameStarted', mockRPSListeners.rpsGameStarted);
+      testController.addListener('rpsGameChanged', mockRPSListeners.rpsGameChanged);
     });
     it('Emits rpsOpponentCreated when a rps challenge request has been created by the current player', () => {
       testController.createChallengeRequestAgainstPlayer(potentialOpponent);
@@ -519,7 +519,7 @@ describe('TownController', () => {
         emitEventAndExpectListenerFiring(
           'rpsChallengeReceived',
           rpsChallengeAccepted,
-          'rpsGameStarted',
+          'rpsGameChanged',
         );
       });
     });
