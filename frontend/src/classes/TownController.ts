@@ -109,6 +109,11 @@ export type TownEvents = {
   rpsChallengeCreated: (player: PlayerController) => void;
 
   /**
+   * This is subject to change, but when the popup modal dissappears due to the player cancelling, the challenge is destroyed.
+   */
+  rpsChallengeRemoved: (player: PlayerController) => void;
+
+  /**
    * An event that indicates that a game of RPS has been started, which is the parameter passed to the listener.
    */
   rpsGameStarted: (rpsGame: RPS) => void;
@@ -478,7 +483,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('rpsChallengeResponse', response => {
       // FIXME
+      console.log('got to start of rpsChallengeResponse');
       if (response.response) {
+        console.log(`got into rpsChallengeResponse`);
         this.emit('rpsGameStarted', new RPS(response.challenger, response.challengee));
       }
     });
@@ -538,6 +545,14 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   /**
+   * Emit a challenge remove event against the potatential opponent.
+   * @param potentialOpponent
+   */
+  removeChallengeRequestAgainstPlayer(potentialOpponent: PlayerController) {
+    this.emit('rpsChallengeRemoved', potentialOpponent);
+  }
+
+  /**
    * Emit a challenge event for the current player to the given player
    *
    * @param player
@@ -572,7 +587,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
 
       if (challenger !== undefined && challengee !== undefined) {
         const newGame = new RPS(challenger.id, challengee.id);
-        this.emit('rpsGameStarted', newGame); // we need to make sure this works and emits correctly, since the PlayerControlleres did not work when emitted
+        console.log(`about to emit the new rpsGameStarted in startRPS`);
+        this._socket.emit('rpsGameStarted', newGame); // we need to make sure this works and emits correctly, since the PlayerControlleres did not work when emitted
+        this.emit('rpsGameStarted', newGame);
         return newGame;
       }
     }
@@ -794,9 +811,16 @@ export function useChallengeReceived(): string | undefined {
         setChallenger(rpsEvent.challenger);
       }
     };
+    const challengeRemovalHandler = (challengerPlayer: PlayerController) => {
+      if (challengerPlayer.id === townController.ourPlayer.id) {
+        setChallenger(undefined);
+      }
+    };
     townController.addListener('rpsChallengeReceived', challengeHandler);
+    townController.addListener('rpsChallengeRemoved', challengeRemovalHandler);
     return () => {
       townController.removeListener('rpsChallengeReceived', challengeHandler);
+      townController.removeListener('rpsChallengeRemoved', challengeRemovalHandler);
     };
   }, [townController, setChallenger, challenger]);
   return challenger;
@@ -836,6 +860,7 @@ export function useRPSGame(player: string): RPS | undefined {
 
   useEffect(() => {
     const rpsHandler = (updatedGame: RPS) => {
+      console.log(`got into rpsHandler... `); // issue is here with this hook
       if (updatedGame.playerOne === player || updatedGame.playerTwo === player) {
         setRPSGame(updatedGame);
       }
@@ -861,11 +886,18 @@ export function usePotentialOpponent(): PlayerController | undefined {
     const opponentHandler = (opponent: PlayerController) => {
       setPotentialOpponent(opponent);
     };
+    const removeOpponentHandler = (opponent: PlayerController) => {
+      if (opponent === potentialOpponent) {
+        setPotentialOpponent(undefined);
+      }
+    };
     townController.addListener('rpsChallengeCreated', opponentHandler);
+    townController.addListener('rpsChallengeRemoved', removeOpponentHandler);
     return () => {
       townController.removeListener('rpsChallengeCreated', opponentHandler);
+      townController.addListener('rpsChallengeRemoved', removeOpponentHandler);
     };
-  }, [townController, setPotentialOpponent]);
+  }, [townController, setPotentialOpponent, potentialOpponent]);
   return potentialOpponent;
 }
 

@@ -34,11 +34,7 @@ export default function RPSGameplay(): JSX.Element {
     async (answer: Answer) => {
       try {
         if (currentRPSGame) {
-          if (isPlayerOne) {
-            currentRPSGame.playerOneMove = answer;
-          } else {
-            currentRPSGame.playerTwoMove = answer;
-          }
+          currentRPSGame.selectMove(ourPlayer.id, answer);
           currentRPSGame.calculateWinner();
           toast({
             title: 'Move has been sent',
