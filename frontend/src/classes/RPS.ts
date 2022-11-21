@@ -2,7 +2,6 @@ import EventEmitter from 'events';
 import TypedEmitter from 'typed-emitter';
 import { Answer } from './Answer';
 import { GameStatus } from './GameStatus';
-import PlayerController from './PlayerController';
 
 const DRAW = 'draw';
 
@@ -23,9 +22,9 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
 
   private readonly _playerTwo: string;
 
-  private _playerOneMove: Answer | undefined;
+  private _playerOneMove?: Answer;
 
-  private _playerTwoMove: Answer | undefined;
+  private _playerTwoMove?: Answer;
 
   /**
    * Creates a new RPS game.
@@ -83,35 +82,32 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
    * @param playerTwoAnswer player two's choice of RPS.
    * @returns the winner of the game.
    */
-  public calculateWinnerFromMoves(
-    playerOneAnswer: Answer,
-    playerTwoAnswer: Answer,
-  ): string | undefined {
-    let playerWon: string | undefined;
-    if (playerOneAnswer === Answer.ROCK) {
-      if (playerTwoAnswer === Answer.ROCK) {
-        playerWon = undefined;
+  public calculateWinnerFromMoves(): string {
+    let playerWon: string;
+    if (this._playerOneMove === Answer.ROCK) {
+      if (this._playerTwoMove === Answer.ROCK) {
+        playerWon = DRAW;
         // TODO - todo note drawing with undefined?
-      } else if (playerTwoAnswer === Answer.PAPER) {
+      } else if (this._playerTwoMove === Answer.PAPER) {
         playerWon = this.playerTwo;
       } else {
         playerWon = this.playerOne;
       }
-    } else if (playerOneAnswer === Answer.PAPER) {
-      if (playerTwoAnswer === Answer.ROCK) {
+    } else if (this._playerOneMove === Answer.PAPER) {
+      if (this._playerTwoMove === Answer.ROCK) {
         playerWon = this.playerOne;
-      } else if (playerTwoAnswer === Answer.PAPER) {
-        playerWon = undefined;
+      } else if (this._playerTwoMove === Answer.PAPER) {
+        playerWon = DRAW;
       } else {
         playerWon = this.playerTwo;
       }
     } else {
-      if (playerTwoAnswer === Answer.ROCK) {
+      if (this._playerTwoMove === Answer.ROCK) {
         playerWon = this.playerTwo;
-      } else if (playerTwoAnswer === Answer.PAPER) {
+      } else if (this._playerTwoMove === Answer.PAPER) {
         playerWon = this.playerOne;
       } else {
-        playerWon = undefined;
+        playerWon = DRAW;
       }
     }
     if (playerWon) {
@@ -124,11 +120,10 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     return playerWon;
   }
 
-  public calculateWinner(): string | undefined {
-    if (this._playerOneMove !== undefined && this._playerTwoMove !== undefined) {
-      return this.calculateWinnerFromMoves(this._playerOneMove, this._playerTwoMove);
-    }
-    return undefined;
+  public async calculateWinner(): Promise<string> {
+    await this._playerOneMove;
+    await this._playerTwoMove;
+    return this.calculateWinnerFromMoves();
   }
 
   /**
@@ -137,8 +132,8 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
    * @param playerTwoAnswer player two's choice of RPS.
    * @returns the loser of the game.
    */
-  public calculateLoser(playerOneAnswer: Answer, playerTwoAnswer: Answer): string | undefined {
-    const winner = this.calculateWinnerFromMoves(playerOneAnswer, playerTwoAnswer);
+  public calculateLoser(): string | undefined {
+    const winner = this.calculateWinnerFromMoves();
     if (winner) {
       if (winner === this.playerOne) {
         this.emit('playerLost', this.playerTwo);
