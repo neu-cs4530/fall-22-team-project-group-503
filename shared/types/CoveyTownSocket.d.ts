@@ -1,3 +1,5 @@
+import Answer from 'frontend/src/classes/Answer'
+
 export type TownJoinResponse = {
   /** Unique ID that represents this player * */
   userID: string;
@@ -75,11 +77,11 @@ export type RPSChallenge = {
   response?: boolean;
 };
 
-export type RPS = {
-  playerOne: string;
-  playerTwo: string;
-  status?: GameStatus;
-};
+export type RPSPlayerMove = {
+  player: string;
+  opponent: string;
+  move: Answer;
+}
 
 export interface ServerToClientEvents {
   playerMoved: (movedPlayer: Player) => void;
@@ -93,7 +95,8 @@ export interface ServerToClientEvents {
   rpsChallengeSent: (challenge: RPSChallenge) => void;
   rpsChallengeReceived: (challenge: RPSChallenge) => void;
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
-  rpsGameChanged: (rpsGame: RPS) => void;
+  rpsGameChanged: (rpsGame: RPSChallenge) => void;
+  rpsPlayerMove: (move: RPSPlayerMove) => void;
 }
 
 export interface ClientToServerEvents {
@@ -104,5 +107,6 @@ export interface ClientToServerEvents {
   rpsChallengeSent: (challenge: RPSChallenge) => void;
   rpsChallengeReceived: (challenge: RPSChallenge) => void;
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
-  rpsGameChanged: (rpsGame: RPS) => void;
+  rpsGameChanged: (rpsGame: RPSChallenge) => void;
+  rpsPlayerMove: (move: RPSPlayerMove) => void;
 }

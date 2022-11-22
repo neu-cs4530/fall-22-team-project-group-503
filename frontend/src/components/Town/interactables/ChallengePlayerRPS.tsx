@@ -8,7 +8,7 @@ import {
   ModalOverlay,
   useToast,
 } from '@chakra-ui/react';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback } from 'react';
 import { usePotentialOpponent } from '../../../classes/TownController';
 import useTownController from '../../../hooks/useTownController';
 

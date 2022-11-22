@@ -2,13 +2,22 @@ import EventEmitter from 'events';
 import TypedEmitter from 'typed-emitter';
 import { Answer } from './Answer';
 import { GameStatus } from './GameStatus';
+import { RPSPlayerMove } from '../types/CoveyTownSocket';
+import useTownController from '../hooks/useTownController';
+import { useEffect, useState } from 'react';
 
 const DRAW = 'draw';
 
+export type RPSResult = {
+  winner: string;
+  loser: string;
+};
+
 export type RPSEvents = {
   statusChange: (newStatus: GameStatus) => void;
-  playerWon: (player: string) => void;
-  playerLost: (player: string) => void;
+  // playerWon: (player: string) => void;
+  // playerLost: (player: string) => void;
+  gameEnded: (result: RPSResult) => void;
   playersDrawed: (draw: string) => void;
 };
 
@@ -26,6 +35,8 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
 
   private _playerTwoMove?: Answer;
 
+  private _winner?: string;
+
   /**
    * Creates a new RPS game.
    */
@@ -34,6 +45,15 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     this._playerOne = playerOne;
     this._playerTwo = playerTwo;
     this._status = GameStatus.NEW;
+  }
+
+  get winner(): string | undefined {
+    return this._winner;
+  }
+
+  set winner(newWinner: string | undefined) {
+    this._winner = newWinner;
+    // TODO emit?
   }
 
   get status(): GameStatus {
@@ -83,6 +103,7 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
    * @returns the winner of the game.
    */
   public calculateWinnerFromMoves(): string {
+    console.log(`starting to calculate 1: '${this._playerOneMove}' 2: '${this._playerTwoMove}'`);
     let playerWon: string;
     if (this._playerOneMove === Answer.ROCK) {
       if (this._playerTwoMove === Answer.ROCK) {
@@ -111,8 +132,12 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
       }
     }
     if (playerWon) {
-      this.emit('playerWon', playerWon);
-      this.emit('playerLost', this.playerOne === playerWon ? this.playerTwo : this.playerOne);
+      // this.emit('playerWon', playerWon);
+      // this.emit('playerLost', this.playerOne === playerWon ? this.playerTwo : this.playerOne);
+      this.emit('gameEnded', {
+        winner: playerWon,
+        loser: this.playerOne === playerWon ? this.playerTwo : this.playerOne,
+      });
     } else {
       this.emit('playersDrawed', DRAW);
     }
@@ -120,34 +145,71 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     return playerWon;
   }
 
-  public async calculateWinner(): Promise<string> {
-    await this._playerOneMove;
-    await this._playerTwoMove;
-    return this.calculateWinnerFromMoves();
-  }
+  // public async calculateWinner(): Promise<string> {
+  //   // await this._playerOneMove;
+  //   // await this._playerTwoMove;
+  //   const winner = this.calculateWinnerFromMoves();
+  //   console.log('a winner is selected');
+  //   this.emit('gameEnded')
+  //   return winner;
+  // }
 
-  /**
-   * Determines the loser of a game of RPS.
-   * @param playerOneAnswer player one's choice of RPS.
-   * @param playerTwoAnswer player two's choice of RPS.
-   * @returns the loser of the game.
-   */
-  public calculateLoser(): string | undefined {
-    const winner = this.calculateWinnerFromMoves();
-    if (winner) {
-      if (winner === this.playerOne) {
-        this.emit('playerLost', this.playerTwo);
-      } else {
-        this.emit('playerLost', this.playerOne);
-      }
-      this.status = GameStatus.FINISHED;
+  // /**
+  //  * Determines the loser of a game of RPS.
+  //  * @param playerOneAnswer player one's choice of RPS.
+  //  * @param playerTwoAnswer player two's choice of RPS.
+  //  * @returns the loser of the game.
+  //  */
+  // public calculateLoser(): string | undefined {
+  //   const winner = this.calculateWinnerFromMoves();
+  //   if (winner) {
+  //     if (winner === this.playerOne) {
+  //       this.emit('playerLost', this.playerTwo);
+  //     } else {
+  //       this.emit('playerLost', this.playerOne);
+  //     }
+  //     this.status = GameStatus.FINISHED;
+  //   }
+  //   return winner;
+  // }
+
+  // public updateFrom(newRPS: RPS) {
+  //   this._status = newRPS.status;
+  //   this._playerOneMove = newRPS.playerOneMove;
+  //   this._playerTwoMove = newRPS.playerTwoMove;
+  // }
+
+  public updateFrom(playerMove: RPSPlayerMove) {
+    // how to determine who is player one vs two
+    console.log(`starting to update 1: '${this._playerOneMove}' 2: '${this._playerTwoMove}'`);
+    if (playerMove.player === this.playerOne) {
+      this.playerOneMove = playerMove.move;
+      // emit?
+    } else if (playerMove.player === this.playerTwo) {
+      this.playerTwoMove = playerMove.move;
     }
-    return winner;
+    console.log(`updated.... 1: '${this._playerOneMove}' 2: '${this._playerTwoMove}'`);
+    if (this.playerOneMove && this.playerTwoMove) {
+      this.calculateWinnerFromMoves();
+    }
   }
+}
 
-  public updateFrom(newRPS: RPS) {
-    this._status = newRPS.status;
-    this._playerOneMove = newRPS.playerOneMove;
-    this._playerTwoMove = newRPS.playerTwoMove;
-  }
+export function useRPSResult(rps: RPS) {
+  const [winner, setWinner] = useState<string>();
+  const [loser, setLoser] = useState<string>();
+
+  useEffect(() => {
+    const gameHandler = (gameResult: RPSResult) => {
+      if (gameResult.winner) {
+        setWinner(gameResult.winner);
+        setLoser(gameResult.loser);
+      }
+      rps.addListener('gameEnded', gameHandler);
+      return () => {
+        rps.removeListener('gameEnded', gameHandler);
+      };
+    };
+  }, [rps]);
+  return { winner, loser };
 }

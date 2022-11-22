@@ -47,7 +47,6 @@ export default function AcceptChallengeRPS(): JSX.Element {
           response: true,
         });
       }
-
       toast({
         title: 'Challenge Accepted!',
         status: 'success',

@@ -9,33 +9,37 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import React, { useCallback } from 'react';
-import { useRPSGame } from '../../../classes/TownController';
+import { useIsInRPSGame } from '../../../classes/TownController';
 import useTownController from '../../../hooks/useTownController';
 import { Answer } from '../../../classes/Answer';
 
 export default function RPSGameplay(): JSX.Element {
   const coveyTownController = useTownController();
-  const currentRPSGame = useRPSGame(coveyTownController.ourPlayer.id);
+  const ourPlayer = coveyTownController.ourPlayer;
+  const currentRPSGame = useIsInRPSGame(ourPlayer.id);
 
   const closeModal = useCallback(() => {
+    coveyTownController.removeRPSGame(currentRPSGame);
     coveyTownController.unPause();
     close();
-  }, [coveyTownController]);
+  }, [coveyTownController, currentRPSGame]);
 
   const toast = useToast();
 
   let isOpen = currentRPSGame !== undefined;
 
-  const ourPlayer = coveyTownController.ourPlayer;
-
-  const isPlayerOne: boolean = currentRPSGame ? currentRPSGame.playerOne === ourPlayer.id : false;
-
   const selectMove = useCallback(
     async (answer: Answer) => {
       try {
         if (currentRPSGame) {
-          currentRPSGame.selectMove(ourPlayer.id, answer);
-          currentRPSGame.calculateWinner();
+          coveyTownController.submitMove({
+            player: ourPlayer.id,
+            opponent:
+              currentRPSGame.challengee === ourPlayer.id
+                ? currentRPSGame.challenger
+                : currentRPSGame.challengee,
+            move: answer,
+          });
           toast({
             title: 'Move has been sent',
             status: 'success',
@@ -59,7 +63,7 @@ export default function RPSGameplay(): JSX.Element {
         }
       }
     },
-    [closeModal, coveyTownController, currentRPSGame, isPlayerOne, toast],
+    [closeModal, coveyTownController, currentRPSGame, ourPlayer.id, toast],
   );
 
   return (
@@ -106,4 +110,7 @@ export default function RPSGameplay(): JSX.Element {
       </ModalContent>
     </Modal>
   );
+}
+function useChallengeRecieved() {
+  throw new Error('Function not implemented.');
 }

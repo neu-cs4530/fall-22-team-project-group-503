@@ -12,7 +12,6 @@ import {
   Interactable,
   PlayerLocation,
   RPSChallenge,
-  RPS,
   ServerToClientEvents,
   SocketData,
   ViewingArea as ViewingAreaModel,
@@ -139,8 +138,8 @@ export default class Town {
       this._broadcastEmitter.emit('rpsChallengeSent', challenge);
     });
 
-    socket.on('rpsGameStarted', (game: RPS) => {
-      this._broadcastEmitter.emit('rpsGameStarted', game);
+    socket.on('rpsGameChanged', (challenge: RPSChallenge) => {
+      this._broadcastEmitter.emit('rpsGameChanged', challenge);
     });
 
     // Register an event listener for the client socket: if the client updates their
