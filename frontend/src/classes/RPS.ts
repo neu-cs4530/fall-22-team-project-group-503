@@ -11,6 +11,7 @@ const DRAW = 'draw';
 export type RPSResult = {
   winner: string;
   loser: string;
+  draw?: boolean;
 };
 
 export type RPSEvents = {
@@ -53,7 +54,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
 
   set winner(newWinner: string | undefined) {
     this._winner = newWinner;
-    // TODO emit?
   }
 
   get status(): GameStatus {
@@ -102,8 +102,7 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
    * @param playerTwoAnswer player two's choice of RPS.
    * @returns the winner of the game.
    */
-  public calculateWinnerFromMoves(): string {
-    console.log(`starting to calculate 1: '${this._playerOneMove}' 2: '${this._playerTwoMove}'`);
+  public calculateWinnerFromMoves(): RPSResult {
     let playerWon: string;
     if (this._playerOneMove === Answer.ROCK) {
       if (this._playerTwoMove === Answer.ROCK) {
@@ -131,18 +130,18 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
         playerWon = DRAW;
       }
     }
-    if (playerWon) {
-      // this.emit('playerWon', playerWon);
-      // this.emit('playerLost', this.playerOne === playerWon ? this.playerTwo : this.playerOne);
-      this.emit('gameEnded', {
-        winner: playerWon,
-        loser: this.playerOne === playerWon ? this.playerTwo : this.playerOne,
-      });
-    } else {
-      this.emit('playersDrawed', DRAW);
+    if (playerWon === DRAW) {
+      return {
+        winner: this.playerOne,
+        loser: this.playerTwo,
+        draw: true,
+      };
     }
     this.status = GameStatus.FINISHED;
-    return playerWon;
+    return {
+      winner: playerWon,
+      loser: this.playerOne === playerWon ? this.playerTwo : this.playerOne,
+    };
   }
 
   // public async calculateWinner(): Promise<string> {
@@ -181,15 +180,13 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
 
   public updateFrom(playerMove: RPSPlayerMove) {
     // how to determine who is player one vs two
-    console.log(`starting to update 1: '${this._playerOneMove}' 2: '${this._playerTwoMove}'`);
     if (playerMove.player === this.playerOne) {
       this.playerOneMove = playerMove.move;
       // emit?
     } else if (playerMove.player === this.playerTwo) {
       this.playerTwoMove = playerMove.move;
     }
-    console.log(`updated.... 1: '${this._playerOneMove}' 2: '${this._playerTwoMove}'`);
-    if (this.playerOneMove && this.playerTwoMove) {
+    if (this._playerOneMove !== undefined && this._playerTwoMove !== undefined) {
       this.calculateWinnerFromMoves();
     }
   }

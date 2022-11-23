@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { Console } from 'console';
 import EventEmitter from 'events';
-import _ from 'lodash';
+import _, { eachRight } from 'lodash';
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import TypedEmitter from 'typed-emitter';
@@ -152,7 +152,7 @@ export type TownEvents = {
   rpsPlayerMove: (move: RPSPlayerMove) => void;
 
   /**
-   * // TODO insert comment later
+   * An event that indicates a game has ended and there is a defined winner and loser'
    */
   gameEnded: (result: RPSResult) => void;
 };
@@ -522,12 +522,14 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      */
     this._socket.on('rpsChallengeSent', challenge => {
       if (challenge.challengee === this.userID) {
-        console.log('was true');
         this.emit('rpsChallengeReceived', challenge);
       } else {
-        console.log('wasnt true');
         this.emit('rpsChallengeSent', challenge);
       }
+    });
+
+    this._socket.on('gameEnded', gameResult => {
+      this.emit('gameEnded', gameResult);
     });
 
     this._socket.on('rpsGameChanged', rpsGame => {
@@ -535,9 +537,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     });
 
     this._socket.on('rpsPlayerMove', rpsMove => {
-      console.log('for the other player....');
       if (this.rpsGame) {
-        console.log('for the other player....111');
         this.rpsGame.updateFrom(rpsMove);
       }
     });
@@ -611,7 +611,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   removeRPSGame(game: RPSChallenge | undefined) {
-    console.log('got into remove rpsgame');
     if (game) {
       game.response = false;
       this.emit('rpsGameChanged', game);
@@ -627,18 +626,18 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   submitMove(move: RPSPlayerMove) {
-    // this._socket.emit('rpsPlayerMove', move);
-    console.log(`111start to make move... move: ${move.move} player: ${move.player}`);
     if (move.opponent === this.userID || move.player === this.userID) {
-      console.log('111made a move for a player....');
       const newGame = this._rpsGame;
+      // await newGame.readyToCompleteGame()
+      // need some function with async here to get the move from other opponentt
       this._socket.emit('rpsPlayerMove', move);
       if (newGame) {
-        console.log('here???');
         newGame.updateFrom(move);
         this._rpsGame = newGame;
-        // this._socket.emit('rpsPlayerMove', move);
-        this._rpsGame.calculateWinnerFromMoves();
+        // or here, something to have the rpsGame wait
+        const newGameResult = this._rpsGame.calculateWinnerFromMoves();
+        this._socket.emit('gameEnded', newGameResult);
+        this._rpsGame = undefined;
       }
     }
   }
@@ -679,7 +678,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       if (challenger !== undefined && challengee !== undefined) {
         const newGame = new RPS(challenger.id, challengee.id);
         this._rpsGame = newGame;
-        console.log('about to emit `rpsGameChanged`');
         response.response = true;
         this._socket.emit('rpsGameChanged', response); // we need to make sure this works and emits correctly, since the PlayerControlleres did not work when emitted
         return newGame;
@@ -687,14 +685,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     }
     return undefined;
   }
-
-  // public makeRPSMove(rpsGame: RPS, hand: Answer, player: PlayerController) {
-  //   if (rpsGame.playerOne === player.id) {
-  //     rpsGame.playerOneMove = hand;
-  //   } else if (rpsGame.playerTwo === player.id) {
-  //     rpsGame.playerTwoMove = hand;
-  //   }
-  // }
 
   /**
    * Update the settings of the current town. Sends the request to update the settings to the townService,
@@ -907,7 +897,6 @@ export function useChallengeReceived(): string | undefined {
   const [challenger, setChallenger] = useState<string>();
   useEffect(() => {
     const challengeHandler = (rpsEvent: RPSChallenge) => {
-      console.log(`got into useChallengeReceived handler`);
       if (rpsEvent.challengee === townController.ourPlayer.id) {
         setChallenger(rpsEvent.challenger);
       }
@@ -1027,19 +1016,21 @@ export function useRPSMove() {
   return move;
 }
 
-export function useRPSResult() {
+export function useRPSResult(player: string) {
   const townController = useTownController();
   const [result, setResult] = useState<RPSResult>();
 
   useEffect(() => {
-    const resultHandler = (newMove: RPSResult) => {
-      setResult(newMove);
+    const resultHandler = (newResult: RPSResult) => {
+      if (newResult.winner === player || newResult.loser === player) {
+        setResult(newResult);
+      }
     };
     townController.addListener('gameEnded', resultHandler);
     return () => {
       townController.removeListener('gameEnded', resultHandler);
     };
-  }, [townController]);
+  }, [player, townController]);
   return result;
 }
 

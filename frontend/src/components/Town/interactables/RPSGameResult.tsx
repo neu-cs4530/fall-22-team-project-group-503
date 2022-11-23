@@ -1,31 +1,35 @@
-import {
-  Button,
-  Modal,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  useToast,
-} from '@chakra-ui/react';
-import React, { useCallback } from 'react';
-import { useIsInRPSGame, useRPSResult } from '../../../classes/TownController';
+import { useToast } from '@chakra-ui/react';
+import React from 'react';
+import { useRPSResult } from '../../../classes/TownController';
 import useTownController from '../../../hooks/useTownController';
-import { Answer } from '../../../classes/Answer';
 
 export default function RPSGameResult(): JSX.Element {
   const coveyTownController = useTownController();
   const ourPlayer = coveyTownController.ourPlayer;
-  const newResult = useRPSResult();
+  const ourResult = useRPSResult(ourPlayer.id);
 
   const toast = useToast();
 
+  const isWinner = ourResult?.winner === ourPlayer.id;
+
   try {
-    if (newResult) {
-      toast({
-        title: 'recieved resulty',
-        status: 'success',
-      });
+    if (ourResult) {
+      if (ourResult.draw) {
+        toast({
+          title: 'The game ended in a tie',
+          status: 'info',
+        });
+      } else if (isWinner) {
+        toast({
+          title: 'You won the game! :)',
+          status: 'success',
+        });
+      } else {
+        toast({
+          title: 'You lost the game! :(',
+          status: 'warning',
+        });
+      }
     }
   } catch (err) {
     if (err instanceof Error) {

@@ -83,6 +83,11 @@ export type RPSPlayerMove = {
   move: Answer;
 }
 
+export type RPSResult = {
+  winner: string;
+  loser: string;
+}
+
 export interface ServerToClientEvents {
   playerMoved: (movedPlayer: Player) => void;
   playerDisconnect: (disconnectedPlayer: Player) => void;
@@ -97,6 +102,7 @@ export interface ServerToClientEvents {
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
   rpsGameChanged: (rpsGame: RPSChallenge) => void;
   rpsPlayerMove: (move: RPSPlayerMove) => void;
+  gameEnded: (result: RPSResult) => void;
 }
 
 export interface ClientToServerEvents {
@@ -109,4 +115,5 @@ export interface ClientToServerEvents {
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
   rpsGameChanged: (rpsGame: RPSChallenge) => void;
   rpsPlayerMove: (move: RPSPlayerMove) => void;
+  gameEnded: (result: RPSResult) => void;
 }
