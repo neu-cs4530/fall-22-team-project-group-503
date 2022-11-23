@@ -75,6 +75,12 @@ export type RPSChallenge = {
   response?: boolean;
 };
 
+export type RPSGameComplete = {
+  player: string;
+  win: boolean;
+};
+
+
 export interface ServerToClientEvents {
   playerMoved: (movedPlayer: Player) => void;
   playerDisconnect: (disconnectedPlayer: Player) => void;
@@ -88,6 +94,7 @@ export interface ServerToClientEvents {
   rpsChallengeReceived: (challenge: RPSChallenge) => void;
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
   rpsGameStarted: (rpsGame: RPS) => void;
+  rpsGameEnded: (RPSGameComplete: RPS) => void;
 }
 
 export interface ClientToServerEvents {
@@ -99,4 +106,5 @@ export interface ClientToServerEvents {
   rpsChallengeReceived: (challenge: RPSChallenge) => void;
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
   rpsGameStarted: (rpsGame: RPS) => void;
+  rpsGameEnded: (RPSGameComplete: RPS) => void;
 }

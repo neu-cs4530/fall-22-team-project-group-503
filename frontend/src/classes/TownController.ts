@@ -15,6 +15,7 @@ import {
   CoveyTownSocket,
   PlayerLocation,
   RPSChallenge,
+  RPSGameComplete,
   TownSettingsUpdate,
   ViewingArea as ViewingAreaModel,
 } from '../types/CoveyTownSocket';
@@ -30,12 +31,6 @@ export type ConnectionProperties = {
   userName: string;
   townID: string;
   loginController: LoginController;
-};
-
-export type PlayerScore = {
-  id: string;
-  userName: string;
-  score: number;
 };
 
 /**
@@ -68,10 +63,15 @@ export type TownEvents = {
    */
   playerMoved: (movedPlayer: PlayerController) => void;
   /**
+   * An event that indicates that a game has ended. This event is dispatched after updating the player's location -
+   * the new score can be found on the PlayerController.
+   */
+  rpsGameEnded: (update: RPSGameComplete) => void;
+  /**
    * An event that indicates that a player score has changed. This event is dispatched after updating the player's location -
    * the new score can be found on the PlayerController.
    */
-  playerScoreChanged: (updatedPlayer: PlayerController) => void;
+  playerScoreUpdated: (update: RPSGameComplete) => void;
   /**
    * An event that indicates that the set of conversation areas has changed. This event is dispatched
    * when a conversation area is created, or when the set of active conversations has changed. This event is dispatched
@@ -493,6 +493,19 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         this.emit('rpsChallengeSent', challenge);
       }
     });
+    /**
+     * end game
+     */
+    this._socket.on('rpsGameEnded', end => {
+      if (end.player === this.userID) {
+        this.emit('playerScoreUpdated', end);
+        if (end.win) {
+          this.ourPlayer.incrementScore();
+        }
+      } else {
+        this.emit('rpsGameEnded', end);
+      }
+    });
   }
 
   /**
@@ -510,23 +523,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     assert(ourPlayer);
     ourPlayer.location = newLocation;
     this.emit('playerMoved', ourPlayer);
-  }
-
-  /**
-   * Emit a scoreUpdate event for the current player, updating the state locally and
-   * also notifying the townService that our player moved.
-   *
-   * Note: it is the responsibility of the townService to set the 'interactableID' parameter
-   * of the player's score, and any interactableID set here may be overwritten by the townService
-   *
-   * @param newLocation
-   */
-  public emitScore(score: number) {
-    this._socket.emit('scoreUpdate', score);
-    const ourPlayer = this._ourPlayer;
-    assert(ourPlayer);
-    ourPlayer.score = score;
-    this.emit('playerScoreChanged', ourPlayer);
   }
 
   /**
@@ -925,34 +921,27 @@ export function useActiveConversationAreas(): ConversationAreaController[] {
  *
  * @returns an array of PlayerController's, representing the current set of players in the town
  */
-export function useLeaderboard(): PlayerScore[] {
+export function useLeaderboard(): PlayerController[] {
   const townController = useTownController();
-  const [players, setPlayers] = useState<PlayerController[]>(townController.players);
+  function top10(players: PlayerController[]) {
+    players.sort((a, b) => b.score - a.score);
+    return players.slice(0, 10)
+  }
+
+
+  const [leaderboard, setLeaderboard] = useState<PlayerController[]>(top10(townController.players));
+
   useEffect(() => {
-    const updatePlayers = (update: PlayerController) => {
-      const newPlayers: PlayerController[] = [];
-      townController.players.forEach(p => {
-        if (p.id === update.id) {
-          p.score = update.score;
-        }
-        newPlayers.push(p);
-      });
-      setPlayers(newPlayers);
+    const updateLeaderboard = () => {
+      setLeaderboard(top10(townController.players));
     };
 
-    townController.addListener('playerScoreChanged', updatePlayers);
+    townController.addListener('playerScoreUpdated', updateLeaderboard);
     return () => {
-      townController.removeListener('playerScoreChanged', updatePlayers);
+      townController.removeListener('playerScoreUpdated', updateLeaderboard);
+
     };
-  }, [townController, setPlayers]);
-  const leaderboard: PlayerScore[] = [];
-  players.forEach(player => {
-    leaderboard.push({ id: player.id, userName: player.userName, score: player.score });
-  });
-  leaderboard.sort((a, b) => {
-    return a.score - b.score;
-  });
-  leaderboard.slice(0, 10);
+  }, [townController, setLeaderboard]);
   return leaderboard;
 }
 
