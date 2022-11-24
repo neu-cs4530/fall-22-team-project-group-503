@@ -19,7 +19,6 @@ export type RPSEvents = {
   // playerWon: (player: string) => void;
   // playerLost: (player: string) => void;
   gameEnded: (result: RPSResult) => void;
-  playersDrawed: (draw: string) => void;
 };
 
 /**
@@ -98,8 +97,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
 
   /**
    * Determines the winner of a game of RPS.
-   * @param playerOneAnswer player one's choice of RPS.
-   * @param playerTwoAnswer player two's choice of RPS.
    * @returns the winner of the game.
    */
   public calculateWinnerFromMoves(): RPSResult {
@@ -137,7 +134,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
         draw: true,
       };
     }
-    this.status = GameStatus.FINISHED;
     return {
       winner: playerWon,
       loser: this.playerOne === playerWon ? this.playerTwo : this.playerOne,
@@ -192,21 +188,21 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
   }
 }
 
-export function useRPSResult(rps: RPS) {
-  const [winner, setWinner] = useState<string>();
-  const [loser, setLoser] = useState<string>();
+// export function useRPSResult(rps: RPS) {
+//   const [winner, setWinner] = useState<string>();
+//   const [loser, setLoser] = useState<string>();
 
-  useEffect(() => {
-    const gameHandler = (gameResult: RPSResult) => {
-      if (gameResult.winner) {
-        setWinner(gameResult.winner);
-        setLoser(gameResult.loser);
-      }
-      rps.addListener('gameEnded', gameHandler);
-      return () => {
-        rps.removeListener('gameEnded', gameHandler);
-      };
-    };
-  }, [rps]);
-  return { winner, loser };
-}
+//   useEffect(() => {
+//     const gameHandler = (gameResult: RPSResult) => {
+//       if (gameResult.winner) {
+//         setWinner(gameResult.winner);
+//         setLoser(gameResult.loser);
+//       }
+//       rps.addListener('gameEnded', gameHandler);
+//       return () => {
+//         rps.removeListener('gameEnded', gameHandler);
+//       };
+//     };
+//   }, [rps]);
+//   return { winner, loser };
+// }
