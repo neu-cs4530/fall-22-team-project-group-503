@@ -3,8 +3,6 @@ import TypedEmitter from 'typed-emitter';
 import { Answer } from './Answer';
 import { GameStatus } from './GameStatus';
 import { RPSPlayerMove } from '../types/CoveyTownSocket';
-import useTownController from '../hooks/useTownController';
-import { useEffect, useState } from 'react';
 
 const DRAW = 'draw';
 
@@ -190,23 +188,4 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
       this.calculateWinnerFromMoves();
     }
   }
-}
-
-export function useRPSResult(rps: RPS) {
-  const [winner, setWinner] = useState<string>();
-  const [loser, setLoser] = useState<string>();
-
-  useEffect(() => {
-    const gameHandler = (gameResult: RPSResult) => {
-      if (gameResult.winner) {
-        setWinner(gameResult.winner);
-        setLoser(gameResult.loser);
-      }
-      rps.addListener('gameEnded', gameHandler);
-      return () => {
-        rps.removeListener('gameEnded', gameHandler);
-      };
-    };
-  }, [rps]);
-  return { winner, loser };
 }

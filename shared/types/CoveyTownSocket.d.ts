@@ -102,7 +102,7 @@ export interface ServerToClientEvents {
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
   rpsGameChanged: (rpsGame: RPSChallenge) => void;
   rpsPlayerMove: (move: RPSPlayerMove) => void;
-  gameEnded: (result: RPSResult) => void;
+  rpsGameEnded: (result: RPSResult) => void;
 }
 
 export interface ClientToServerEvents {
@@ -115,5 +115,5 @@ export interface ClientToServerEvents {
   rpsChallengeResponse: (challenge: RPSChallenge) => void;
   rpsGameChanged: (rpsGame: RPSChallenge) => void;
   rpsPlayerMove: (move: RPSPlayerMove) => void;
-  gameEnded: (result: RPSResult) => void;
+  rpsGameEnded: (result: RPSResult) => void;
 }

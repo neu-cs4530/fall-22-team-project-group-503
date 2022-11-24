@@ -1,7 +1,6 @@
 import assert from 'assert';
-import { Console } from 'console';
 import EventEmitter from 'events';
-import _, { eachRight } from 'lodash';
+import _ from 'lodash';
 import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import TypedEmitter from 'typed-emitter';
@@ -20,7 +19,6 @@ import {
   ViewingArea as ViewingAreaModel,
 } from '../types/CoveyTownSocket';
 import { isConversationArea, isViewingArea } from '../types/TypeUtils';
-import { Answer } from './Answer';
 import ConversationAreaController from './ConversationAreaController';
 import PlayerController from './PlayerController';
 import RPS, { RPSResult } from './RPS';
@@ -154,7 +152,7 @@ export type TownEvents = {
   /**
    * An event that indicates a game has ended and there is a defined winner and loser'
    */
-  gameEnded: (result: RPSResult) => void;
+  rpsGameEnded: (result: RPSResult) => void;
 };
 
 /**
@@ -528,8 +526,8 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       }
     });
 
-    this._socket.on('gameEnded', gameResult => {
-      this.emit('gameEnded', gameResult);
+    this._socket.on('rpsGameEnded', gameResult => {
+      this.emit('rpsGameEnded', gameResult);
     });
 
     this._socket.on('rpsGameChanged', rpsGame => {
@@ -636,7 +634,8 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         this._rpsGame = newGame;
         // or here, something to have the rpsGame wait
         const newGameResult = this._rpsGame.calculateWinnerFromMoves();
-        this._socket.emit('gameEnded', newGameResult);
+        this._socket.emit('rpsGameEnded', newGameResult);
+        this.emit('rpsGameEnded', newGameResult);
         this._rpsGame = undefined;
       }
     }
@@ -1026,9 +1025,9 @@ export function useRPSResult(player: string) {
         setResult(newResult);
       }
     };
-    townController.addListener('gameEnded', resultHandler);
+    townController.addListener('rpsGameEnded', resultHandler);
     return () => {
-      townController.removeListener('gameEnded', resultHandler);
+      townController.removeListener('rpsGameEnded', resultHandler);
     };
   }, [player, townController]);
   return result;
