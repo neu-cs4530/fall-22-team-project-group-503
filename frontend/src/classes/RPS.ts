@@ -185,25 +185,3 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     }
   }
 }
-<<<<<<< HEAD
-=======
-
-// export function useRPSResult(rps: RPS) {
-//   const [winner, setWinner] = useState<string>();
-//   const [loser, setLoser] = useState<string>();
-
-//   useEffect(() => {
-//     const gameHandler = (gameResult: RPSResult) => {
-//       if (gameResult.winner) {
-//         setWinner(gameResult.winner);
-//         setLoser(gameResult.loser);
-//       }
-//       rps.addListener('gameEnded', gameHandler);
-//       return () => {
-//         rps.removeListener('gameEnded', gameHandler);
-//       };
-//     };
-//   }, [rps]);
-//   return { winner, loser };
-// }
->>>>>>> a10284529d16a2daac2ba362961fe487c91075a8
