@@ -15,7 +15,7 @@ import {
   CoveyTownSocket,
   PlayerLocation,
   RPSChallenge,
-  RPSGameComplete,
+  RPSResult,
   TownSettingsUpdate,
   ViewingArea as ViewingAreaModel,
 } from '../types/CoveyTownSocket';
@@ -66,12 +66,12 @@ export type TownEvents = {
    * An event that indicates that a game has ended. This event is dispatched after updating the player's location -
    * the new score can be found on the PlayerController.
    */
-  rpsGameEnded: (update: RPSGameComplete) => void;
+  rpsGameEnded: (update: RPSResult) => void;
   /**
    * An event that indicates that a player score has changed. This event is dispatched after updating the player's location -
    * the new score can be found on the PlayerController.
    */
-  playerScoreUpdated: (update: RPSGameComplete) => void;
+  playerScoreUpdated: (update: RPSResult) => void;
   /**
    * An event that indicates that the set of conversation areas has changed. This event is dispatched
    * when a conversation area is created, or when the set of active conversations has changed. This event is dispatched
@@ -496,12 +496,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     /**
      * end game
      */
-    this._socket.on('rpsGameEnded', end => {
-      if (end.player === this.userID) {
+    this._socket.on('gameEnded', end => {
+      if (end.winner === this.userID) {
         this.emit('playerScoreUpdated', end);
-        if (end.win) {
-          this.ourPlayer.incrementScore();
-        }
+        this.ourPlayer.incrementScore();
       } else {
         this.emit('rpsGameEnded', end);
       }
@@ -925,9 +923,8 @@ export function useLeaderboard(): PlayerController[] {
   const townController = useTownController();
   function top10(players: PlayerController[]) {
     players.sort((a, b) => b.score - a.score);
-    return players.slice(0, 10)
+    return players.slice(0, 10);
   }
-
 
   const [leaderboard, setLeaderboard] = useState<PlayerController[]>(top10(townController.players));
 
@@ -939,7 +936,6 @@ export function useLeaderboard(): PlayerController[] {
     townController.addListener('playerScoreUpdated', updateLeaderboard);
     return () => {
       townController.removeListener('playerScoreUpdated', updateLeaderboard);
-
     };
   }, [townController, setLeaderboard]);
   return leaderboard;

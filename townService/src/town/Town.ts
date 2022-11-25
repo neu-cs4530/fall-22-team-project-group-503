@@ -12,7 +12,7 @@ import {
   Interactable,
   PlayerLocation,
   RPSChallenge,
-  RPSGameComplete,
+  RPSResult,
   ServerToClientEvents,
   SocketData,
   ViewingArea as ViewingAreaModel,
@@ -139,8 +139,8 @@ export default class Town {
       this._broadcastEmitter.emit('rpsChallengeSent', challenge);
     });
     // forwards gameEnded message
-    socket.on('rpsGameEnded', (challenge: RPSGameComplete) => {
-      this._broadcastEmitter.emit('rpsGameEnded', challenge);
+    socket.on('gameEnded', (challenge: RPSResult) => {
+      this._broadcastEmitter.emit('gameEnded', challenge);
     });
 
     // Register an event listener for the client socket: if the client updates their
