@@ -6,7 +6,7 @@ import useTownController from '../../../hooks/useTownController';
 export default function RPSGameResult(): JSX.Element {
   const coveyTownController = useTownController();
   const ourPlayer = coveyTownController.ourPlayer;
-  const ourResult = useRPSResult(ourPlayer.id);
+  const ourResult = useRPSResult();
 
   const toast = useToast();
 
@@ -16,17 +16,17 @@ export default function RPSGameResult(): JSX.Element {
     if (ourResult) {
       if (ourResult.draw) {
         toast({
-          title: 'The game ended in a tie',
+          title: 'The game ended in a tie!',
           status: 'info',
         });
       } else if (isWinner) {
         toast({
-          title: 'You won the game! :)',
+          title: 'You won the game!',
           status: 'success',
         });
       } else {
         toast({
-          title: 'You lost the game! :(',
+          title: 'You lost the game!',
           status: 'warning',
         });
       }

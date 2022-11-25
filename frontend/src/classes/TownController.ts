@@ -537,25 +537,9 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     this._socket.on('rpsPlayerMove', rpsMove => {
       if (this.rpsGame) {
         this.rpsGame.updateFrom(rpsMove);
+        this._attemptToFinishGame(this._rpsGame);
       }
     });
-
-    /**
-     * Waits for a player's move and then updates the ongoing RPS game accordingly.
-     */
-    // this._socket.on('rpsPlayerMove', (move: RPSPlayerMove) => {
-    //   console.log('start to make move...');
-    //   if (move.opponent === this.userID || move.player === this.userID) {
-    //     console.log('made a move for a player....');
-    //     const newGame = this._rpsGame;
-    //     if (newGame) {
-    //       newGame.updateFrom(move);
-    //       this._rpsGame = newGame;
-    //       this.emit('rpsPlayerMove', move);
-    //       this._rpsGame.calculateWinnerFromMoves();
-    //     }
-    //   }
-    // });
   }
 
   /**
@@ -573,6 +557,14 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     assert(ourPlayer);
     ourPlayer.location = newLocation;
     this.emit('playerMoved', ourPlayer);
+  }
+
+  private _attemptToFinishGame(game: RPS | undefined) {
+    if (game && game.readyToComplete()) {
+      const newGameResult = game.calculateWinnerFromMoves();
+      this._socket.emit('rpsGameEnded', newGameResult);
+      this._rpsGame = undefined;
+    }
   }
 
   /**
@@ -622,16 +614,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   submitMove(move: RPSPlayerMove) {
     if (move.opponent === this.userID || move.player === this.userID) {
       const newGame = this._rpsGame;
-      // await newGame.readyToCompleteGame()
-      // need some function with async here to get the move from other opponentt
       this._socket.emit('rpsPlayerMove', move);
       if (newGame) {
         newGame.updateFrom(move);
-        this._rpsGame = newGame;
-        // or here, something to have the rpsGame wait
-        const newGameResult = this._rpsGame.calculateWinnerFromMoves();
-        this._socket.emit('rpsGameEnded', newGameResult);
-        this._rpsGame = undefined;
+        this._attemptToFinishGame(newGame);
       }
     }
   }
@@ -966,7 +952,6 @@ export function useIsInRPSGame(player: string) {
   return rpsGame;
 }
 
-// function to listen to 'rpsChallengeCreated' and return the potentialOpponent
 /**
  * A react hook that retrieves the potential opponent. Relies on TownControllerContext.
  * @return the potential opponent
@@ -994,30 +979,21 @@ export function usePotentialOpponent(): PlayerController | undefined {
   return potentialOpponent;
 }
 
-export function useRPSMove() {
-  const townController = useTownController();
-  const [move, setMove] = useState<RPSPlayerMove>();
-
-  useEffect(() => {
-    const moveHandler = (newMove: RPSPlayerMove) => {
-      setMove(newMove);
-    };
-    townController.addListener('rpsPlayerMove', moveHandler);
-    return () => {
-      townController.removeListener('rpsPlayerMove', moveHandler);
-    };
-  }, [townController, setMove]);
-  return move;
-}
-
-export function useRPSResult(player: string) {
+/**
+ * A react hook that retrieves the result of an RPS match that our player is a part of. Relies on TownControllerContext
+ * @returns the result of an RPS game
+ */
+export function useRPSResult() {
   const townController = useTownController();
   const [result, setResult] = useState<RPSResult>();
 
   useEffect(() => {
     const resultHandler = (newResult: RPSResult) => {
-      console.log(`got into handler...`);
-      if (newResult.winner === player || newResult.loser === player) {
+      if (
+        newResult.winner === townController.ourPlayer.id ||
+        newResult.loser === townController.ourPlayer.id
+      ) {
+        console.log('result has been set');
         setResult(newResult);
       }
     };

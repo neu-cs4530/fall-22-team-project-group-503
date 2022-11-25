@@ -93,6 +93,10 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     }
   }
 
+  public readyToComplete(): boolean {
+    return this._playerOneMove !== undefined && this._playerTwoMove !== undefined;
+  }
+
   /**
    * Determines the winner of a game of RPS.
    * @returns the winner of the game.
@@ -138,40 +142,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     };
   }
 
-  // public async calculateWinner(): Promise<string> {
-  //   // await this._playerOneMove;
-  //   // await this._playerTwoMove;
-  //   const winner = this.calculateWinnerFromMoves();
-  //   console.log('a winner is selected');
-  //   this.emit('gameEnded')
-  //   return winner;
-  // }
-
-  // /**
-  //  * Determines the loser of a game of RPS.
-  //  * @param playerOneAnswer player one's choice of RPS.
-  //  * @param playerTwoAnswer player two's choice of RPS.
-  //  * @returns the loser of the game.
-  //  */
-  // public calculateLoser(): string | undefined {
-  //   const winner = this.calculateWinnerFromMoves();
-  //   if (winner) {
-  //     if (winner === this.playerOne) {
-  //       this.emit('playerLost', this.playerTwo);
-  //     } else {
-  //       this.emit('playerLost', this.playerOne);
-  //     }
-  //     this.status = GameStatus.FINISHED;
-  //   }
-  //   return winner;
-  // }
-
-  // public updateFrom(newRPS: RPS) {
-  //   this._status = newRPS.status;
-  //   this._playerOneMove = newRPS.playerOneMove;
-  //   this._playerTwoMove = newRPS.playerTwoMove;
-  // }
-
   public updateFrom(playerMove: RPSPlayerMove) {
     // how to determine who is player one vs two
     if (playerMove.player === this.playerOne) {
@@ -179,9 +149,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
       // emit?
     } else if (playerMove.player === this.playerTwo) {
       this.playerTwoMove = playerMove.move;
-    }
-    if (this._playerOneMove !== undefined && this._playerTwoMove !== undefined) {
-      this.calculateWinnerFromMoves();
     }
   }
 }

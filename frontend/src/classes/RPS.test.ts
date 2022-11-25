@@ -147,4 +147,22 @@ describe('[T2] ConversationAreaController', () => {
       expect(mockListeners.gameEnded).toBeCalled();
     });
   });
+  describe('readyToComplete', () => {
+    it('returns false if both players do not have a move', () => {
+      expect(rps.readyToComplete()).toEqual(false);
+    });
+    it('returns false if player 1 does not have a move', () => {
+      rps.selectMove(player2.id, Answer.ROCK);
+      expect(rps.readyToComplete()).toEqual(false);
+    });
+    it('returns false if player 2 does not have a move', () => {
+      rps.selectMove(player1.id, Answer.PAPER);
+      expect(rps.readyToComplete()).toEqual(false);
+    });
+    it('returns true if both players have a move', () => {
+      rps.selectMove(player1.id, Answer.PAPER);
+      rps.selectMove(player2.id, Answer.ROCK);
+      expect(rps.readyToComplete()).toEqual(true);
+    });
+  });
 });
