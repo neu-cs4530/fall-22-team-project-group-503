@@ -114,23 +114,11 @@ export type TownEvents = {
   rpsChallengeRemoved: (player: PlayerController) => void;
 
   /**
-   * An event that indicates that a game of RPS has been started, which is the parameter passed to the listener.
-   */
-  // rpsGameStarted: (rpsGame: RPS) => void;
-
-  /**
    * An event that indicates that an RPS challenge has been sent.
    * The event is dispatched when a user clicks on another user's sprite.
    * The challenge is passed as a parameter.
    */
   rpsChallengeSent: (challenge: RPSChallenge) => void;
-
-  /**
-   * An event that indicates that an RPS challenge response has been sent.
-   * The event is dispatched when a user responds to an RPS challenge they received.
-   * The challenge as well as if its been accepted or declined is passed as a parameter.
-   */
-  rpsChallengeResponse: (challenge: RPSChallenge) => void;
 
   /**
    * An event that indicates that the current player has received a challenge from another player. This event is dispatched when another
@@ -145,12 +133,12 @@ export type TownEvents = {
   rpsGameChanged: (changedRPS: RPSChallenge) => void;
 
   /**
-   * An event that indicates that an player has made a move in a game of RPS. The event is emitted after receiving user input of the user choosing r, p, or s.
+   * An event that indicates that an player has made a move in a game of RPS. The event is emitted after receiving user input of the user choosing rock, paper, or scissors.
    */
   rpsPlayerMove: (move: RPSPlayerMove) => void;
 
   /**
-   * An event that indicates a game has ended and there is a defined winner and loser'
+   * An event that indicates a game has ended and there is a defined winner and loser
    */
   rpsGameEnded: (result: RPSResult) => void;
 };
@@ -383,16 +371,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   }
 
   public set rpsGame(newRPS: RPS | undefined) {
-    const currGame = this._rpsGame;
     this._rpsGame = newRPS;
-    // figure out of new game or game over
-    if (!currGame) {
-      // emit new game started?
-    } else if (!newRPS && currGame) {
-      // emit gameover
-    } else if (newRPS && currGame) {
-      // this.emit('rpsGameChanged', newRPS);
-    }
   }
 
   /**
@@ -897,30 +876,6 @@ export function useChallengeReceived(): string | undefined {
 }
 
 /**
- * A react hook to show a response to an RPS challenge causing it to re-render when the response changes.
- * @returns the response to a player's RPS challenge.
- */
-export function useChallengeResponse() {
-  const townController = useTownController();
-  const [challengeStatus, setChallengeStatus] = useState<boolean>();
-
-  useEffect(() => {
-    const challengeStatusHandler = (response: RPSChallenge) => {
-      if (response.response !== true) {
-        setChallengeStatus(false);
-      } else {
-        setChallengeStatus(true);
-      }
-    };
-    townController.addListener('rpsChallengeResponse', challengeStatusHandler);
-    return () => {
-      townController.removeListener('rpsChallengeResponse', challengeStatusHandler);
-    };
-  }, [townController, setChallengeStatus]);
-  return challengeStatus;
-}
-
-/**
  * A react hook that retrieves a game of RPS that this player is a part of. Relies on TownControllerContext.
  * @return the RPS game
  */
@@ -993,7 +948,6 @@ export function useRPSResult() {
         newResult.winner === townController.ourPlayer.id ||
         newResult.loser === townController.ourPlayer.id
       ) {
-        console.log('result has been set');
         setResult(newResult);
       }
     };
@@ -1192,5 +1146,3 @@ export function usePlayersInVideoCall(): PlayerController[] {
   }, [townController, setPlayersInCall]);
   return playersInCall;
 }
-
-// we need some hook to respond to 'playerWon' and 'playerLost' event and for a toast to popup depending on what happens...
