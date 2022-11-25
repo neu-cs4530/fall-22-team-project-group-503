@@ -619,10 +619,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     this.emit('rpsGameChanged', game);
   }
 
-  testingSendingChallenge(c: RPSChallenge) {
-    this.emit('rpsGameChanged', c);
-  }
-
   submitMove(move: RPSPlayerMove) {
     if (move.opponent === this.userID || move.player === this.userID) {
       const newGame = this._rpsGame;
@@ -635,7 +631,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         // or here, something to have the rpsGame wait
         const newGameResult = this._rpsGame.calculateWinnerFromMoves();
         this._socket.emit('rpsGameEnded', newGameResult);
-        this.emit('rpsGameEnded', newGameResult);
         this._rpsGame = undefined;
       }
     }
@@ -1021,6 +1016,7 @@ export function useRPSResult(player: string) {
 
   useEffect(() => {
     const resultHandler = (newResult: RPSResult) => {
+      console.log(`got into handler...`);
       if (newResult.winner === player || newResult.loser === player) {
         setResult(newResult);
       }
@@ -1029,7 +1025,7 @@ export function useRPSResult(player: string) {
     return () => {
       townController.removeListener('rpsGameEnded', resultHandler);
     };
-  }, [player, townController]);
+  });
   return result;
 }
 

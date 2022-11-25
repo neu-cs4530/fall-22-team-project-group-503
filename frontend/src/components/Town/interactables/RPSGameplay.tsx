@@ -111,6 +111,3 @@ export default function RPSGameplay(): JSX.Element {
     </Modal>
   );
 }
-function useChallengeRecieved() {
-  throw new Error('Function not implemented.');
-}

@@ -148,8 +148,8 @@ export default class Town {
       this._broadcastEmitter.emit('rpsGameChanged', challenge);
     });
 
-    socket.on('gameEnded', (gameResult: RPSResult) => {
-      this._broadcastEmitter.emit('gameEnded', gameResult);
+    socket.on('rpsGameEnded', (gameResult: RPSResult) => {
+      this._broadcastEmitter.emit('rpsGameEnded', gameResult);
     });
 
     // Register an event listener for the client socket: if the client updates their
