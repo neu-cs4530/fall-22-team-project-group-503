@@ -25,8 +25,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
 
   private _playerTwoMove?: Answer;
 
-  private _winner?: string;
-
   /**
    * Creates a new RPS game.
    */
@@ -34,14 +32,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     super();
     this._playerOne = playerOne;
     this._playerTwo = playerTwo;
-  }
-
-  get winner(): string | undefined {
-    return this._winner;
-  }
-
-  set winner(newWinner: string | undefined) {
-    this._winner = newWinner;
   }
 
   set playerOneMove(answer: Answer) {
