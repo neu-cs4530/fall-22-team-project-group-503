@@ -140,8 +140,8 @@ export default class Town {
       this._broadcastEmitter.emit('rpsChallengeSent', challenge);
     });
     // forwards gameEnded message
-    socket.on('gameEnded', (challenge: RPSResult) => {
-      this._broadcastEmitter.emit('gameEnded', challenge);
+    socket.on('rpsGameEnded', (challenge: RPSResult) => {
+      this._broadcastEmitter.emit('rpsGameEnded', challenge);
     });
 
     socket.on('rpsPlayerMove', (move: RPSPlayerMove) => {
