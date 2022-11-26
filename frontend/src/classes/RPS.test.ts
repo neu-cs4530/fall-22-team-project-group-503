@@ -1,7 +1,6 @@
 import { mock, mockClear } from 'jest-mock-extended';
 import { nanoid } from 'nanoid';
 import { Answer } from './Answer';
-import { GameStatus } from './GameStatus';
 import PlayerController from './PlayerController';
 import RPS, { RPSEvents } from './RPS';
 
@@ -25,45 +24,7 @@ describe('[T2] ConversationAreaController', () => {
       moving: true,
     });
     rps = new RPS(player1.id, player2.id);
-    mockClear(mockListeners.statusChange);
     mockClear(mockListeners.gameEnded);
-    rps.addListener('statusChange', mockListeners.statusChange);
-  });
-  describe('statusChange', () => {
-    it('Returns true if status is started if game started', () => {
-      rps.startGame();
-      expect(rps.status).toBe(GameStatus.STARTED);
-      expect(mockListeners.statusChange).toBeCalled();
-    });
-    it('Returns true if status is finished if game finished', () => {
-      rps.updateFrom({
-        player: player1.id,
-        opponent: player2.id,
-        move: Answer.ROCK,
-      });
-      rps.updateFrom({
-        player: player2.id,
-        opponent: player1.id,
-        move: Answer.PAPER,
-      });
-      rps.calculateWinnerFromMoves();
-      expect(rps.status).toBe(GameStatus.FINISHED);
-      expect(mockListeners.statusChange).toBeCalled();
-    });
-    it('Returns true if status is finished if game finished with draw result', () => {
-      rps.updateFrom({
-        player: player1.id,
-        opponent: player2.id,
-        move: Answer.ROCK,
-      });
-      rps.updateFrom({
-        player: player2.id,
-        opponent: player1.id,
-        move: Answer.ROCK,
-      });
-      rps.calculateWinnerFromMoves();
-      expect(rps.status).toBe(GameStatus.FINISHED);
-    });
   });
   describe('calculate winner', () => {
     it('returns player one as winner if player one wins with paper', () => {

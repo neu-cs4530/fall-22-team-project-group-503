@@ -1,7 +1,6 @@
 import EventEmitter from 'events';
 import TypedEmitter from 'typed-emitter';
 import { Answer } from './Answer';
-import { GameStatus } from './GameStatus';
 import { RPSPlayerMove } from '../types/CoveyTownSocket';
 
 export type RPSResult = {
@@ -11,7 +10,6 @@ export type RPSResult = {
 };
 
 export type RPSEvents = {
-  statusChange: (newStatus: GameStatus) => void;
   gameEnded: (result: RPSResult) => void;
 };
 
@@ -19,8 +17,6 @@ export type RPSEvents = {
  * Represents the functionality of a two-player RPS game.
  */
 export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEvents>) {
-  private _status: GameStatus;
-
   private readonly _playerOne: string;
 
   private readonly _playerTwo: string;
@@ -38,7 +34,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     super();
     this._playerOne = playerOne;
     this._playerTwo = playerTwo;
-    this._status = GameStatus.NEW;
   }
 
   get winner(): string | undefined {
@@ -47,17 +42,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
 
   set winner(newWinner: string | undefined) {
     this._winner = newWinner;
-  }
-
-  get status(): GameStatus {
-    return this._status;
-  }
-
-  set status(newStatus: GameStatus) {
-    if (this.status !== newStatus) {
-      this.emit('statusChange', newStatus);
-    }
-    this._status = newStatus;
   }
 
   set playerOneMove(answer: Answer) {
@@ -76,11 +60,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     return this._playerTwo;
   }
 
-  public startGame() {
-    this.status = GameStatus.STARTED;
-    this.emit('statusChange', GameStatus.STARTED);
-  }
-
   /**
    * Determine if each player has made a valid RPS move and the game can be completed
    * @returns true if and only if both players have made their moves in this game
@@ -97,7 +76,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     let playerWon = '';
 
     if (this._playerOneMove === this._playerTwoMove) {
-      this._status = GameStatus.FINISHED;
       return {
         winner: this.playerOne,
         loser: this.playerTwo,
@@ -124,7 +102,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
         playerWon = this.playerOne;
       }
     }
-    this.status = GameStatus.FINISHED;
     return {
       winner: playerWon,
       loser: this.playerOne === playerWon ? this.playerTwo : this.playerOne,
