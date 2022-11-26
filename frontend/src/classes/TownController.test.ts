@@ -486,13 +486,11 @@ describe('TownController', () => {
       mockClear(mockRPSListeners.rpsChallengeCreated);
       mockClear(mockRPSListeners.rpsChallengeSent);
       mockClear(mockRPSListeners.rpsChallengeReceived);
-      mockClear(mockRPSListeners.rpsChallengeResponse);
       mockClear(mockRPSListeners.rpsGameChanged);
       mockClear(mockRPSListeners.rpsGameEnded);
       testController.addListener('rpsChallengeCreated', mockRPSListeners.rpsChallengeCreated);
       testController.addListener('rpsChallengeSent', mockRPSListeners.rpsChallengeSent);
       testController.addListener('rpsChallengeReceived', mockRPSListeners.rpsChallengeSent);
-      testController.addListener('rpsChallengeResponse', mockRPSListeners.rpsChallengeResponse);
       testController.addListener('rpsGameChanged', mockRPSListeners.rpsGameChanged);
       testController.addListener('rpsGameEnded', mockRPSListeners.rpsGameEnded);
 

@@ -4,8 +4,6 @@ import { Answer } from './Answer';
 import { GameStatus } from './GameStatus';
 import { RPSPlayerMove } from '../types/CoveyTownSocket';
 
-const DRAW = 'draw';
-
 export type RPSResult = {
   winner: string;
   loser: string;
@@ -14,8 +12,6 @@ export type RPSResult = {
 
 export type RPSEvents = {
   statusChange: (newStatus: GameStatus) => void;
-  // playerWon: (player: string) => void;
-  // playerLost: (player: string) => void;
   gameEnded: (result: RPSResult) => void;
 };
 
@@ -85,29 +81,32 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     this.emit('statusChange', GameStatus.STARTED);
   }
 
-  public selectMove(player: string, move: Answer) {
-    if (this.playerOne === player) {
-      this._playerOneMove = move;
-    } else if (this.playerTwo === player) {
-      this._playerTwoMove = move;
-    }
-  }
-
+  /**
+   * Determine if each player has made a valid RPS move and the game can be completed
+   * @returns true if and only if both players have made their moves in this game
+   */
   public readyToComplete(): boolean {
     return this._playerOneMove !== undefined && this._playerTwoMove !== undefined;
   }
 
   /**
-   * Determines the winner of a game of RPS.
-   * @returns the winner of the game.
+   * Determines the winner of a game of RPS and returns an RPSResult object with the correct winner and loser
+   * @returns the winner and loser of this RPS game
    */
   public calculateWinnerFromMoves(): RPSResult {
-    let playerWon: string;
+    let playerWon = '';
+
+    if (this._playerOneMove === this._playerTwoMove) {
+      this._status = GameStatus.FINISHED;
+      return {
+        winner: this.playerOne,
+        loser: this.playerTwo,
+        draw: true,
+      };
+    }
+
     if (this._playerOneMove === Answer.ROCK) {
-      if (this._playerTwoMove === Answer.ROCK) {
-        playerWon = DRAW;
-        // TODO - todo note drawing with undefined?
-      } else if (this._playerTwoMove === Answer.PAPER) {
+      if (this._playerTwoMove === Answer.PAPER) {
         playerWon = this.playerTwo;
       } else {
         playerWon = this.playerOne;
@@ -115,8 +114,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     } else if (this._playerOneMove === Answer.PAPER) {
       if (this._playerTwoMove === Answer.ROCK) {
         playerWon = this.playerOne;
-      } else if (this._playerTwoMove === Answer.PAPER) {
-        playerWon = DRAW;
       } else {
         playerWon = this.playerTwo;
       }
@@ -125,28 +122,23 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
         playerWon = this.playerTwo;
       } else if (this._playerTwoMove === Answer.PAPER) {
         playerWon = this.playerOne;
-      } else {
-        playerWon = DRAW;
       }
     }
-    if (playerWon === DRAW) {
-      return {
-        winner: this.playerOne,
-        loser: this.playerTwo,
-        draw: true,
-      };
-    }
+    this.status = GameStatus.FINISHED;
     return {
       winner: playerWon,
       loser: this.playerOne === playerWon ? this.playerTwo : this.playerOne,
     };
   }
 
+  /**
+   * Using an RPSPlayer move object, update this RPS instance accordingly
+   * @param playerMove
+   */
   public updateFrom(playerMove: RPSPlayerMove) {
     // how to determine who is player one vs two
     if (playerMove.player === this.playerOne) {
       this.playerOneMove = playerMove.move;
-      // emit?
     } else if (playerMove.player === this.playerTwo) {
       this.playerTwoMove = playerMove.move;
     }

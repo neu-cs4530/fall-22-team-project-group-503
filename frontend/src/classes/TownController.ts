@@ -879,14 +879,15 @@ export function useChallengeReceived(): string | undefined {
  * A react hook that retrieves a game of RPS that this player is a part of. Relies on TownControllerContext.
  * @return the RPS game
  */
-export function useIsInRPSGame(player: string) {
+export function useIsInRPSGame() {
   const townController = useTownController();
   const [rpsGame, setRPSGame] = useState<RPSChallenge | undefined>();
 
   useEffect(() => {
     const rpsHandler = (updatedGame: RPSChallenge) => {
       if (
-        (updatedGame.challengee === player || updatedGame.challenger === player) &&
+        (updatedGame.challengee === townController.ourPlayer.id ||
+          updatedGame.challenger === townController.ourPlayer.id) &&
         updatedGame.response
       ) {
         setRPSGame(updatedGame);
@@ -903,7 +904,7 @@ export function useIsInRPSGame(player: string) {
       townController.removeListener('rpsGameChanged', rpsHandler);
       townController.removeListener('rpsPlayerMove', rpsRemove);
     };
-  }, [townController, setRPSGame, player]);
+  }, [townController, setRPSGame]);
   return rpsGame;
 }
 

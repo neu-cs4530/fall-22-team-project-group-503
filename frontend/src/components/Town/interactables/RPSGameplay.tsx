@@ -16,12 +16,11 @@ import { Answer } from '../../../classes/Answer';
 export default function RPSGameplay(): JSX.Element {
   const coveyTownController = useTownController();
   const ourPlayer = coveyTownController.ourPlayer;
-  const currentRPSGame = useIsInRPSGame(ourPlayer.id);
+  const currentRPSGame = useIsInRPSGame();
 
   const closeModal = useCallback(() => {
     coveyTownController.removeRPSGame(currentRPSGame);
     coveyTownController.unPause();
-    close();
   }, [coveyTownController, currentRPSGame]);
 
   const toast = useToast();
