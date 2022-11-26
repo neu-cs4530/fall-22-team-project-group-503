@@ -1,7 +1,6 @@
 import { mock, mockClear } from 'jest-mock-extended';
 import { nanoid } from 'nanoid';
 import { Answer } from './Answer';
-import { GameStatus } from './GameStatus';
 import PlayerController from './PlayerController';
 import RPS, { RPSEvents } from './RPS';
 
@@ -25,70 +24,200 @@ describe('[T2] ConversationAreaController', () => {
       moving: true,
     });
     rps = new RPS(player1.id, player2.id);
-    mockClear(mockListeners.statusChange);
-    mockClear(mockListeners.playerWon);
-    mockClear(mockListeners.playerLost);
-    mockClear(mockListeners.playersDrawed);
-    rps.addListener('statusChange', mockListeners.statusChange);
-    rps.addListener('playerWon', mockListeners.playerWon);
-    rps.addListener('playerLost', mockListeners.playerLost);
-    rps.addListener('playersDrawed', mockListeners.playersDrawed);
-  });
-  describe('statusChange', () => {
-    it('Returns true if status is started if game started', () => {
-      rps.startGame();
-      expect(rps.status).toBe(GameStatus.STARTED);
-      expect(mockListeners.statusChange).toBeCalled();
-    });
-    it('Returns true if status is finished if game finished', () => {
-      rps.calculateWinner(Answer.ROCK, Answer.PAPER);
-      expect(rps.status).toBe(GameStatus.FINISHED);
-      expect(mockListeners.statusChange).toBeCalled();
-    });
-    it('Returns true if status is finished if game finished with draw result', () => {
-      rps.calculateWinner(Answer.ROCK, Answer.ROCK);
-      expect(rps.status).toBe(GameStatus.FINISHED);
-      expect(mockListeners.statusChange).toBeCalled();
-    });
+    mockClear(mockListeners.gameEnded);
   });
   describe('calculate winner', () => {
-    it('returns player one if player one wins with paper', () => {
-      expect(rps.calculateWinner(Answer.PAPER, Answer.ROCK)).toEqual(player1);
-      expect(mockListeners.playerWon).toBeCalled();
+    it('returns player one as winner if player one wins with paper', () => {
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.PAPER,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.ROCK,
+      });
+      const expectedResult = {
+        winner: player1.id,
+        loser: player2.id,
+      };
+      expect(rps.calculateWinnerFromMoves()).toEqual(expectedResult);
     });
-    it('returns player one if player one wins with rock', () => {
-      expect(rps.calculateWinner(Answer.ROCK, Answer.SCISSORS)).toEqual(player1);
-      expect(mockListeners.playerWon).toBeCalled();
+    it('returns player one as winner if player one wins with rock', () => {
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.ROCK,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.SCISSORS,
+      });
+      const expectedResult = {
+        winner: player1.id,
+        loser: player2.id,
+      };
+      expect(rps.calculateWinnerFromMoves()).toEqual(expectedResult);
     });
-    it('returns player one if player one wins with scissors', () => {
-      expect(rps.calculateWinner(Answer.SCISSORS, Answer.PAPER)).toEqual(player1);
-      expect(mockListeners.playerWon).toBeCalled();
+    it('returns player one as winner if player one wins with scissors', () => {
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.SCISSORS,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.PAPER,
+      });
+      const expectedResult = {
+        winner: player1.id,
+        loser: player2.id,
+      };
+      expect(rps.calculateWinnerFromMoves()).toEqual(expectedResult);
     });
-    it('returns player two if player two wins with paper', () => {
-      expect(rps.calculateWinner(Answer.ROCK, Answer.PAPER)).toEqual(player2);
-      expect(mockListeners.playerWon).toBeCalled();
+    it('returns player two as winnner if player two wins with paper', () => {
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.ROCK,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.PAPER,
+      });
+      const expectedResult = {
+        winner: player2.id,
+        loser: player1.id,
+      };
+      expect(rps.calculateWinnerFromMoves()).toEqual(expectedResult);
     });
-    it('returns player two if player two wins with rock', () => {
-      expect(rps.calculateWinner(Answer.SCISSORS, Answer.ROCK)).toEqual(player2);
-      expect(mockListeners.playerWon).toBeCalled();
+    it('returns player two as winner if player two wins with rock', () => {
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.SCISSORS,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.ROCK,
+      });
+      const expectedResult = {
+        winner: player2.id,
+        loser: player1.id,
+      };
+      expect(rps.calculateWinnerFromMoves()).toEqual(expectedResult);
     });
-    it('returns player two if player two wins with scissors', () => {
-      expect(rps.calculateWinner(Answer.PAPER, Answer.SCISSORS)).toEqual(player2);
-      expect(mockListeners.playerWon).toBeCalled();
+    it('returns player two as winner if player two wins with scissors', () => {
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.PAPER,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.SCISSORS,
+      });
+      const expectedResult = {
+        winner: player2.id,
+        loser: player1.id,
+      };
+      expect(rps.calculateWinnerFromMoves()).toEqual(expectedResult);
     });
   });
   describe('draw', () => {
     it('returns draw if players drawed with paper', () => {
-      expect(rps.calculateWinner(Answer.PAPER, Answer.PAPER)).toBeUndefined();
-      expect(mockListeners.playersDrawed).toBeCalled();
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.PAPER,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.PAPER,
+      });
+      const expectedResult = {
+        winner: player1.id,
+        loser: player2.id,
+        draw: true,
+      };
+      expect(rps.calculateWinnerFromMoves()).toEqual(expectedResult);
     });
     it('returns draw if players drawed with scissors', () => {
-      expect(rps.calculateWinner(Answer.SCISSORS, Answer.SCISSORS)).toBeUndefined();
-      expect(mockListeners.playersDrawed).toBeCalled();
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.SCISSORS,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.SCISSORS,
+      });
+      const expectedResult = {
+        winner: player1.id,
+        loser: player2.id,
+        draw: true,
+      };
+      expect(rps.calculateWinnerFromMoves()).toEqual(expectedResult);
     });
     it('returns draw if players drawed with rock', () => {
-      expect(rps.calculateWinner(Answer.ROCK, Answer.ROCK)).toBeUndefined();
-      expect(mockListeners.playersDrawed).toBeCalled();
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.ROCK,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.ROCK,
+      });
+      const expectedResult = {
+        winner: player1.id,
+        loser: player2.id,
+        draw: true,
+      };
+      expect(rps.calculateWinnerFromMoves()).toEqual(expectedResult);
+    });
+  });
+  describe('readyToComplete', () => {
+    it('returns false if both players do not have a move', () => {
+      expect(rps.readyToComplete()).toEqual(false);
+    });
+    it('returns false if player 1 does not have a move', () => {
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.ROCK,
+      });
+      expect(rps.readyToComplete()).toEqual(false);
+    });
+    it('returns false if player 2 does not have a move', () => {
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.PAPER,
+      });
+      expect(rps.readyToComplete()).toEqual(false);
+    });
+    it('returns true if both players have a move', () => {
+      rps.updateFrom({
+        player: player1.id,
+        opponent: player2.id,
+        move: Answer.PAPER,
+      });
+      rps.updateFrom({
+        player: player2.id,
+        opponent: player1.id,
+        move: Answer.SCISSORS,
+      });
+      expect(rps.readyToComplete()).toEqual(true);
     });
   });
 });

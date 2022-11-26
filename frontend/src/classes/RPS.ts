@@ -1,27 +1,29 @@
 import EventEmitter from 'events';
 import TypedEmitter from 'typed-emitter';
 import { Answer } from './Answer';
-import { GameStatus } from './GameStatus';
-import PlayerController from './PlayerController';
+import { RPSPlayerMove } from '../types/CoveyTownSocket';
 
-const DRAW = 'draw';
+export type RPSResult = {
+  winner: string;
+  loser: string;
+  draw?: boolean;
+};
 
 export type RPSEvents = {
-  statusChange: (newStatus: GameStatus) => void;
-  playerWon: (player: string) => void;
-  playerLost: (player: string) => void;
-  playersDrawed: (draw: string) => void;
+  gameEnded: (result: RPSResult) => void;
 };
 
 /**
  * Represents the functionality of a two-player RPS game.
  */
 export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEvents>) {
-  private _status: GameStatus;
-
   private readonly _playerOne: string;
 
   private readonly _playerTwo: string;
+
+  private _playerOneMove?: Answer;
+
+  private _playerTwoMove?: Answer;
 
   /**
    * Creates a new RPS game.
@@ -30,18 +32,14 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     super();
     this._playerOne = playerOne;
     this._playerTwo = playerTwo;
-    this._status = GameStatus.NEW;
   }
 
-  get status(): GameStatus {
-    return this._status;
+  set playerOneMove(answer: Answer) {
+    this._playerOneMove = answer;
   }
 
-  set status(newStatus: GameStatus) {
-    if (this.status !== newStatus) {
-      this.emit('statusChange', newStatus);
-    }
-    this._status = newStatus;
+  set playerTwoMove(answer: Answer) {
+    this._playerTwoMove = answer;
   }
 
   get playerOne(): string {
@@ -52,70 +50,64 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     return this._playerTwo;
   }
 
-  public startGame() {
-    this.status = GameStatus.STARTED;
-    this.emit('statusChange', GameStatus.STARTED);
+  /**
+   * Determine if each player has made a valid RPS move and the game can be completed
+   * @returns true if and only if both players have made their moves in this game
+   */
+  public readyToComplete(): boolean {
+    return this._playerOneMove !== undefined && this._playerTwoMove !== undefined;
   }
 
   /**
-   * Determines the winner of a game of RPS.
-   * @param playerOneAnswer player one's choice of RPS.
-   * @param playerTwoAnswer player two's choice of RPS.
-   * @returns the winner of the game.
+   * Determines the winner of a game of RPS and returns an RPSResult object with the correct winner and loser
+   * @returns the winner and loser of this RPS game
    */
-  public calculateWinner(playerOneAnswer: Answer, playerTwoAnswer: Answer): string | undefined {
-    let playerWon: string | undefined;
-    if (playerOneAnswer === Answer.ROCK) {
-      if (playerTwoAnswer === Answer.ROCK) {
-        playerWon = undefined;
-        // TODO - todo note drawing with undefined?
-      } else if (playerTwoAnswer === Answer.PAPER) {
+  public calculateWinnerFromMoves(): RPSResult {
+    let playerWon = '';
+
+    if (this._playerOneMove === this._playerTwoMove) {
+      return {
+        winner: this.playerOne,
+        loser: this.playerTwo,
+        draw: true,
+      };
+    }
+
+    if (this._playerOneMove === Answer.ROCK) {
+      if (this._playerTwoMove === Answer.PAPER) {
         playerWon = this.playerTwo;
       } else {
         playerWon = this.playerOne;
       }
-    } else if (playerOneAnswer === Answer.PAPER) {
-      if (playerTwoAnswer === Answer.ROCK) {
+    } else if (this._playerOneMove === Answer.PAPER) {
+      if (this._playerTwoMove === Answer.ROCK) {
         playerWon = this.playerOne;
-      } else if (playerTwoAnswer === Answer.PAPER) {
-        playerWon = undefined;
       } else {
         playerWon = this.playerTwo;
       }
     } else {
-      if (playerTwoAnswer === Answer.ROCK) {
+      if (this._playerTwoMove === Answer.ROCK) {
         playerWon = this.playerTwo;
-      } else if (playerTwoAnswer === Answer.PAPER) {
+      } else if (this._playerTwoMove === Answer.PAPER) {
         playerWon = this.playerOne;
-      } else {
-        playerWon = undefined;
       }
     }
-    if (playerWon) {
-      this.emit('playerWon', playerWon);
-    } else {
-      this.emit('playersDrawed', DRAW);
-    }
-    this.status = GameStatus.FINISHED;
-    return playerWon;
+    return {
+      winner: playerWon,
+      loser: this.playerOne === playerWon ? this.playerTwo : this.playerOne,
+    };
   }
 
   /**
-   * Determines the loser of a game of RPS.
-   * @param playerOneAnswer player one's choice of RPS.
-   * @param playerTwoAnswer player two's choice of RPS.
-   * @returns the loser of the game.
+   * Using an RPSPlayer move object, update this RPS instance accordingly
+   * @param playerMove
    */
-  public calculateLoser(playerOneAnswer: Answer, playerTwoAnswer: Answer): string | undefined {
-    const winner = this.calculateWinner(playerOneAnswer, playerTwoAnswer);
-    if (winner) {
-      if (winner === this.playerOne) {
-        this.emit('playerLost', this.playerTwo);
-      } else {
-        this.emit('playerLost', this.playerOne);
-      }
-      this.status = GameStatus.FINISHED;
+  public updateFrom(playerMove: RPSPlayerMove) {
+    // how to determine who is player one vs two
+    if (playerMove.player === this.playerOne) {
+      this.playerOneMove = playerMove.move;
+    } else if (playerMove.player === this.playerTwo) {
+      this.playerTwoMove = playerMove.move;
     }
-    return winner;
   }
 }

@@ -14,15 +14,17 @@ import {
   CoveyTownSocket,
   Player as PlayerModel,
   PlayerLocation,
+  RPSChallenge,
+  RPSPlayerMove,
   ServerToClientEvents,
   TownJoinResponse,
-  RPSChallenge,
 } from '../types/CoveyTownSocket';
 import { isConversationArea, isViewingArea } from '../types/TypeUtils';
+import { Answer } from './Answer';
 import PlayerController from './PlayerController';
+import RPS, { RPSResult } from './RPS';
+import TownController, { TownEvents } from './TownController';
 import ViewingAreaController from './ViewingAreaController';
-import TownController from './TownController';
-import { TownEvents } from './TownController';
 /**
  * Mocks the socket-io client constructor such that it will always return the same
  * mockSocket instance. Returns that mockSocket instance to the caller of this function,
@@ -460,67 +462,198 @@ describe('TownController', () => {
     emitEventAndExpectListenerFiring('townClosing', undefined, 'disconnect');
     expect(mockLoginController.setTownController).toBeCalledWith(null);
   });
-  describe('RPS Emitters', () => {
+  describe('RPS emitters', () => {
     // const mockTownController = mock<TownController>();
     const mockRPSListeners = mock<TownEvents>();
-    const potentialOpponent = new PlayerController(nanoid(), nanoid(), {
+    const mockOurPlayer = new PlayerController(nanoid(), nanoid(), {
       x: 1,
       y: 1,
       rotation: 'back',
       moving: false,
     });
+    const mockOpponent = new PlayerController(nanoid(), nanoid(), {
+      x: 1,
+      y: 1,
+      rotation: 'back',
+      moving: false,
+    });
+    const rpsChallenge: RPSChallenge = {
+      challenger: mockOurPlayer.id,
+      challengee: mockOurPlayer.id,
+    };
 
     beforeEach(() => {
       mockClear(mockRPSListeners.rpsChallengeCreated);
       mockClear(mockRPSListeners.rpsChallengeSent);
       mockClear(mockRPSListeners.rpsChallengeReceived);
-      mockClear(mockRPSListeners.rpsChallengeResponse);
-      mockClear(mockRPSListeners.rpsGameStarted);
+      mockClear(mockRPSListeners.rpsGameChanged);
+      mockClear(mockRPSListeners.rpsGameEnded);
       testController.addListener('rpsChallengeCreated', mockRPSListeners.rpsChallengeCreated);
       testController.addListener('rpsChallengeSent', mockRPSListeners.rpsChallengeSent);
       testController.addListener('rpsChallengeReceived', mockRPSListeners.rpsChallengeSent);
-      testController.addListener('rpsChallengeResponse', mockRPSListeners.rpsChallengeResponse);
-      testController.addListener('rpsGameStarted', mockRPSListeners.rpsGameStarted);
+      testController.addListener('rpsGameChanged', mockRPSListeners.rpsGameChanged);
+      testController.addListener('rpsGameEnded', mockRPSListeners.rpsGameEnded);
+
+      jest.spyOn(testController, 'userID', 'get').mockReturnValue(mockOurPlayer.id);
     });
-    it('Emits rpsOpponentCreated when a rps challenge request has been created by the current player', () => {
-      testController.createChallengeRequestAgainstPlayer(potentialOpponent);
-      expect(mockRPSListeners.rpsChallengeCreated).toBeCalledWith(potentialOpponent);
+
+    describe('Challenge emitters', () => {
+      it('Emits rpsOpponentCreated when a rps challenge request has been created by the current player', () => {
+        testController.createChallengeRequestAgainstPlayer(mockOurPlayer);
+        expect(mockRPSListeners.rpsChallengeCreated).toBeCalledWith(mockOurPlayer);
+      });
+      it('Emits rpsChallengeSent when a rps challenge has been sent by the current player to another player', () => {
+        // a mock implementation of challengePlayer() because the method uses private "_ourPlayer" value from
+        // TownController and that value is initially undefined and cannot directly be set.
+        const challengePlayerSpy = jest.spyOn(testController, 'challengePlayer');
+        challengePlayerSpy.mockImplementation((opponent: PlayerController) => {
+          testController.emit('rpsChallengeSent', {
+            challenger: opponent.id,
+            challengee: opponent.id,
+          });
+        });
+        testController.challengePlayer(mockOurPlayer);
+        expect(challengePlayerSpy).toHaveBeenCalled();
+        expect(mockRPSListeners.rpsChallengeSent).toBeCalledTimes(1);
+      });
+      it('Emits rpsChallengeReceived when a RPS challenge has been received by the current player', () => {
+        emitEventAndExpectListenerFiring('rpsChallengeSent', rpsChallenge, 'rpsChallengeReceived');
+      });
     });
-    it('Emits rpsChallengeSent when a rps challenge has been sent by the current player to another player', () => {
-      // a mock implementation of challengePlayer() because the method uses private "_ourPlayer" value from
-      // TownController and that value is initially undefined and cannot directly be set.
-      const challengePlayerSpy = jest.spyOn(testController, 'challengePlayer');
-      challengePlayerSpy.mockImplementation((opponent: PlayerController) => {
-        testController.emit('rpsChallengeSent', {
-          challenger: opponent.id,
-          challengee: opponent.id,
+    describe('Gameplay emitters', () => {
+      describe('Starting a RPS game', () => {
+        beforeEach(() => {
+          // a mock method for start RPS since that method relies on "ourPlayer" and "userID" which rely on TownService.
+          jest.spyOn(testController, 'startRPS').mockImplementation(challenge => {
+            let newGame: RPS | undefined;
+            if (challenge.response === true) {
+              newGame = new RPS(challenge.challenger, challenge.challengee);
+              testController.rpsGame = newGame;
+            }
+            if (newGame) {
+              testController.emit('rpsGameChanged', challenge);
+            }
+            return new Promise(() => {
+              return newGame;
+            });
+          });
+        });
+        it('Starts a game of rps if the response is an accepted challenge', () => {
+          const acceptedChallenge: RPSChallenge = {
+            challenger: mockOurPlayer.id,
+            challengee: mockOpponent.id,
+            response: true,
+          };
+          testController.startRPS(acceptedChallenge);
+          expect(mockRPSListeners.rpsGameChanged).toBeCalledWith(acceptedChallenge);
+        });
+        it('Does not start a game of rps if the challenge was declined', () => {
+          const rejectedChallenge: RPSChallenge = {
+            challenger: mockOurPlayer.id,
+            challengee: mockOpponent.id,
+            response: false,
+          };
+          testController.startRPS(rejectedChallenge);
+          expect(mockRPSListeners.rpsGameChanged).not.toBeCalledWith(rejectedChallenge);
         });
       });
-      testController.challengePlayer(potentialOpponent);
-      expect(challengePlayerSpy).toHaveBeenCalled();
-      expect(mockRPSListeners.rpsChallengeSent).toBeCalledTimes(1);
-    });
-    it('Emits rpsChallengeReceived when a RPS challenge has been received by the current player', () => {
-      const rpsChallenge: RPSChallenge = {
-        challenger: potentialOpponent.id,
-        challengee: potentialOpponent.id,
-      };
-      // for sake of testing, challenging ourselves to a game of rps to see if challenge is received after being sent.
-      emitEventAndExpectListenerFiring('rpsChallengeSent', rpsChallenge, 'rpsChallengeReceived');
-    });
-    describe('rps challenge responses', () => {
-      it('Emits rpsChallengeResponse when a player has responded to a challenge created by this player', () => {});
-      it('Starts a game of rps if the response is an accepted challenge', () => {
-        const rpsChallengeAccepted: RPSChallenge = {
-          challenger: potentialOpponent.id,
-          challengee: potentialOpponent.id,
-          response: true,
-        };
-        emitEventAndExpectListenerFiring(
-          'rpsChallengeReceived',
-          rpsChallengeAccepted,
-          'rpsGameStarted',
-        );
+      describe('Moves during RPS game', () => {
+        let game: RPS;
+        beforeEach(() => {
+          // submit move mock
+          jest.spyOn(testController, 'submitMove').mockImplementation(move => {
+            const newGame = testController.rpsGame;
+            testController.emit('rpsPlayerMove', move);
+            if (newGame) {
+              newGame.updateFrom(move);
+              testController.rpsGame = newGame;
+              const newGameResult = testController.rpsGame.calculateWinnerFromMoves();
+              testController.emit('rpsGameEnded', newGameResult);
+              testController.rpsGame = undefined;
+            }
+          });
+          game = new RPS(mockOurPlayer.id, mockOpponent.id);
+        });
+        it('Emits game ended when an rps game ends after both players make their move (P1 wins)', () => {
+          const playerOneWinMove: RPSPlayerMove = {
+            player: mockOurPlayer.id,
+            opponent: mockOpponent.id,
+            move: Answer.PAPER,
+          };
+          const playerTwoLoseMove: RPSPlayerMove = {
+            player: mockOpponent.id,
+            opponent: mockOurPlayer.id,
+            move: Answer.ROCK,
+          };
+          const gameResult: RPSResult = {
+            winner: mockOurPlayer.id,
+            loser: mockOpponent.id,
+          };
+          game.playerTwoMove = playerTwoLoseMove.move;
+          testController.rpsGame = game;
+          expect(mockRPSListeners.rpsGameEnded).not.toBeCalledWith(gameResult);
+          testController.submitMove(playerOneWinMove);
+          expect(mockRPSListeners.rpsGameEnded).toBeCalledWith(gameResult);
+        });
+        it('Emits game ended when an rps game ends after both players make their move (P2 wins)', () => {
+          const playerOneLoseMove: RPSPlayerMove = {
+            player: mockOurPlayer.id,
+            opponent: mockOpponent.id,
+            move: Answer.ROCK,
+          };
+          const playerTwoWinMove: RPSPlayerMove = {
+            player: mockOpponent.id,
+            opponent: mockOurPlayer.id,
+            move: Answer.PAPER,
+          };
+          const gameResult: RPSResult = {
+            winner: mockOpponent.id,
+            loser: mockOurPlayer.id,
+          };
+          game.playerOneMove = playerOneLoseMove.move;
+          testController.rpsGame = game;
+          expect(mockRPSListeners.rpsGameEnded).not.toBeCalledWith(gameResult);
+          testController.submitMove(playerTwoWinMove);
+          expect(mockRPSListeners.rpsGameEnded).toBeCalledWith(gameResult);
+        });
+        it('Emits game ended when an rps game ends after both players make their move (draw)', () => {
+          const playerOneDrawMove: RPSPlayerMove = {
+            player: mockOurPlayer.id,
+            opponent: mockOpponent.id,
+            move: Answer.ROCK,
+          };
+          const playerTwoDrawMove: RPSPlayerMove = {
+            player: mockOpponent.id,
+            opponent: mockOurPlayer.id,
+            move: Answer.ROCK,
+          };
+          const gameResult: RPSResult = {
+            winner: mockOurPlayer.id,
+            loser: mockOpponent.id,
+            draw: true,
+          };
+          game.playerOneMove = playerOneDrawMove.move;
+          testController.rpsGame = game;
+          expect(mockRPSListeners.rpsGameEnded).not.toBeCalledWith(gameResult);
+          testController.submitMove(playerTwoDrawMove);
+          expect(mockRPSListeners.rpsGameEnded).toBeCalledWith(gameResult);
+        });
+        it('Resets game to undefined once game is over', () => {
+          const playerOneMove: RPSPlayerMove = {
+            player: mockOurPlayer.id,
+            opponent: mockOpponent.id,
+            move: Answer.PAPER,
+          };
+          const playerTwoMove: RPSPlayerMove = {
+            player: mockOpponent.id,
+            opponent: mockOurPlayer.id,
+            move: Answer.ROCK,
+          };
+          game.playerOneMove = playerOneMove.move;
+          testController.rpsGame = game;
+          testController.submitMove(playerTwoMove);
+          expect(testController.rpsGame).toBeUndefined();
+        });
       });
     });
   });

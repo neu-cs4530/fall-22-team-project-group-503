@@ -1,3 +1,5 @@
+import Answer from 'frontend/src/classes/Answer'
+
 export type TownJoinResponse = {
   /** Unique ID that represents this player * */
   userID: string;
@@ -75,6 +77,17 @@ export type RPSChallenge = {
   response?: boolean;
 };
 
+export type RPSPlayerMove = {
+  player: string;
+  opponent: string;
+  move: Answer;
+}
+
+export type RPSResult = {
+  winner: string;
+  loser: string;
+}
+
 export interface ServerToClientEvents {
   playerMoved: (movedPlayer: Player) => void;
   playerDisconnect: (disconnectedPlayer: Player) => void;
@@ -86,8 +99,9 @@ export interface ServerToClientEvents {
   interactableUpdate: (interactable: Interactable) => void;
   rpsChallengeSent: (challenge: RPSChallenge) => void;
   rpsChallengeReceived: (challenge: RPSChallenge) => void;
-  rpsChallengeResponse: (challenge: RPSChallenge) => void;
-  rpsGameStarted: (rpsGame: RPS) => void;
+  rpsGameChanged: (rpsGame: RPSChallenge) => void;
+  rpsPlayerMove: (move: RPSPlayerMove) => void;
+  rpsGameEnded: (result: RPSResult) => void;
 }
 
 export interface ClientToServerEvents {
@@ -97,6 +111,7 @@ export interface ClientToServerEvents {
   scoreUpdate: (score: number) => void;
   rpsChallengeSent: (challenge: RPSChallenge) => void;
   rpsChallengeReceived: (challenge: RPSChallenge) => void;
-  rpsChallengeResponse: (challenge: RPSChallenge) => void;
-  rpsGameStarted: (rpsGame: RPS) => void;
+  rpsGameChanged: (rpsGame: RPSChallenge) => void;
+  rpsPlayerMove: (move: RPSPlayerMove) => void;
+  rpsGameEnded: (result: RPSResult) => void;
 }

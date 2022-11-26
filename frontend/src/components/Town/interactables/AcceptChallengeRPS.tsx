@@ -17,10 +17,18 @@ export default function AcceptChallengeRPS(): JSX.Element {
   const newPotentialChallenger = useChallengeReceived();
   const player = coveyTownController.ourPlayer;
 
+  const potentialChallengerController = coveyTownController.players.find(p => {
+    if (newPotentialChallenger) {
+      return p.id === newPotentialChallenger;
+    }
+  });
+
   const closeModal = useCallback(() => {
     coveyTownController.unPause();
-    close();
-  }, [coveyTownController]);
+    if (potentialChallengerController) {
+      coveyTownController.removeChallengeRequestAgainstPlayer(player);
+    }
+  }, [coveyTownController, player, potentialChallengerController]);
 
   const toast = useToast();
 
@@ -39,7 +47,6 @@ export default function AcceptChallengeRPS(): JSX.Element {
           response: true,
         });
       }
-
       toast({
         title: 'Challenge Accepted!',
         status: 'success',
