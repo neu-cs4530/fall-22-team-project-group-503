@@ -7,6 +7,8 @@ import NewConversationModal from './interactables/NewCoversationModal';
 import TownGameScene from './TownGameScene';
 import ChallengePlayerRPS from './interactables/ChallengePlayerRPS';
 import AcceptChallengeRPS from './interactables/AcceptChallengeRPS';
+import RPSGameplay from './interactables/RPSGameplay';
+import RPSGameResult from './interactables/RPSGameResult';
 
 export default function TownMap(): JSX.Element {
   const coveyTownController = useTownController();
@@ -52,6 +54,8 @@ export default function TownMap(): JSX.Element {
       <NewConversationModal />
       <ChallengePlayerRPS />
       <AcceptChallengeRPS />
+      <RPSGameplay />
+      <RPSGameResult />
       <div id='map-container' />
       <div id='social-container'>
         <SocialSidebar />

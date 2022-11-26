@@ -15,11 +15,14 @@ import useTownController from '../../../hooks/useTownController';
 export default function ChallengePlayerRPS(): JSX.Element {
   const coveyTownController = useTownController();
   const potentialOpponent = usePotentialOpponent();
-  let isOpen = potentialOpponent !== undefined;
+  const isOpen = potentialOpponent !== undefined;
+
   const closeModal = useCallback(() => {
     coveyTownController.unPause();
-    close();
-  }, [coveyTownController]);
+    if (potentialOpponent) {
+      coveyTownController.removeChallengeRequestAgainstPlayer(potentialOpponent);
+    }
+  }, [coveyTownController, potentialOpponent]);
 
   const toast = useToast();
 
@@ -33,6 +36,7 @@ export default function ChallengePlayerRPS(): JSX.Element {
         status: 'success',
       });
       closeModal();
+      coveyTownController.unPause();
     } catch (err) {
       if (err instanceof Error) {
         toast({
@@ -54,9 +58,8 @@ export default function ChallengePlayerRPS(): JSX.Element {
     <Modal
       isOpen={isOpen}
       onClose={() => {
+        console.log(`clicked x`);
         closeModal();
-        isOpen = false;
-        coveyTownController.unPause();
       }}>
       <ModalOverlay />
       <ModalContent>
@@ -71,7 +74,6 @@ export default function ChallengePlayerRPS(): JSX.Element {
             mr={3}
             onClick={() => {
               createRPSChallenge();
-              isOpen = false;
             }}>
             Challenge
           </Button>
