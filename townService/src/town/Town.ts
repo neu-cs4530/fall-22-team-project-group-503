@@ -135,9 +135,13 @@ export default class Town {
     socket.on('chatMessage', (message: ChatMessage) => {
       this._broadcastEmitter.emit('chatMessage', message);
     });
-
+    // forwards rpsChallengeSent message
     socket.on('rpsChallengeSent', (challenge: RPSChallenge) => {
       this._broadcastEmitter.emit('rpsChallengeSent', challenge);
+    });
+    // forwards gameEnded message
+    socket.on('rpsGameEnded', (challenge: RPSResult) => {
+      this._broadcastEmitter.emit('rpsGameEnded', challenge);
     });
 
     socket.on('rpsPlayerMove', (move: RPSPlayerMove) => {

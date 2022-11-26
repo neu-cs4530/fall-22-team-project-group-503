@@ -65,6 +65,10 @@ export default class PlayerController extends (EventEmitter as new () => TypedEm
     return { id: this.id, userName: this.userName, location: this.location };
   }
 
+  public incrementScore() {
+    this.score += 1;
+  }
+
   private _updateGameComponentLocation() {
     if (this.gameObjects && !this.gameObjects.locationManagedByGameScene) {
       const { sprite, label } = this.gameObjects;
