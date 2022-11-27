@@ -139,10 +139,6 @@ export default class Town {
     socket.on('rpsChallengeSent', (challenge: RPSChallenge) => {
       this._broadcastEmitter.emit('rpsChallengeSent', challenge);
     });
-    // forwards gameEnded message
-    socket.on('rpsGameEnded', (challenge: RPSResult) => {
-      this._broadcastEmitter.emit('rpsGameEnded', challenge);
-    });
 
     socket.on('rpsPlayerMove', (move: RPSPlayerMove) => {
       this._broadcastEmitter.emit('rpsPlayerMove', move);
@@ -151,7 +147,7 @@ export default class Town {
     socket.on('rpsGameChanged', (challenge: RPSChallenge) => {
       this._broadcastEmitter.emit('rpsGameChanged', challenge);
     });
-
+    // forwards gameEnded message
     socket.on('rpsGameEnded', (gameResult: RPSResult) => {
       this._broadcastEmitter.emit('rpsGameEnded', gameResult);
     });

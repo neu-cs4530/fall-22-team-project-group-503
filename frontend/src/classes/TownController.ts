@@ -500,8 +500,16 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
       }
     });
 
-    this._socket.on('rpsGameEnded', gameResult => {
-      this.emit('rpsGameEnded', gameResult);
+    /**
+     * end game
+     */
+    this._socket.on('rpsGameEnded', end => {
+      const playerToUpdate = this.players.find(eachPlayer => eachPlayer.id === end.winner);
+      if (playerToUpdate) {
+        playerToUpdate.incrementScore();
+
+        this.emit('playerScoreUpdated', end);
+      }
     });
 
     this._socket.on('rpsGameChanged', rpsGame => {
@@ -1009,10 +1017,16 @@ export function useLeaderboard(): PlayerController[] {
     const updateLeaderboard = () => {
       setLeaderboard(top10(townController.players));
     };
+    const updateList = () => {
+      setLeaderboard(top10(townController.players));
+    };
 
-    townController.addListener('playerScoreUpdated', updateLeaderboard);
+    townController.addListener('rpsGameEnded', updateLeaderboard);
+    townController.addListener('playersChanged', updateList);
+
     return () => {
-      townController.removeListener('playerScoreUpdated', updateLeaderboard);
+      townController.removeListener('rpsGameEnded', updateLeaderboard);
+      townController.removeListener('playersChanged', updateList);
     };
   }, [townController, setLeaderboard]);
   return leaderboard;
