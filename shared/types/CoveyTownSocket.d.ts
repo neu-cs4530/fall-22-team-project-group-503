@@ -86,6 +86,7 @@ export type RPSPlayerMove = {
 export type RPSResult = {
   winner: string;
   loser: string;
+  draw?: boolean;
 }
 
 export interface ServerToClientEvents {
