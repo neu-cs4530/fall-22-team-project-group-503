@@ -12,7 +12,7 @@ import PlayerName from './PlayerName';
  */
 export default function Leaderboard(): JSX.Element {
   const leaderboard = useLeaderboard();
-  const { friendlyName, townID } = useTownController();
+  const { townID } = useTownController();
 
   return (
     <Box>
