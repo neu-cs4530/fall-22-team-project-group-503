@@ -504,12 +504,13 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * end game
      */
     this._socket.on('rpsGameEnded', end => {
-      const playerToUpdate = this.players.find(eachPlayer => eachPlayer.id === end.winner);
-      if (playerToUpdate) {
-        playerToUpdate.incrementScore();
+      // const playerToUpdate = this.players.find(eachPlayer => eachPlayer.id === end.winner);
+      // if (playerToUpdate) {
+      //   playerToUpdate.incrementScore();
 
-        this.emit('playerScoreUpdated', end);
-      }
+      //   this.emit('playerScoreUpdated', end);
+      // }
+      this.emit('rpsGameEnded', end);
     });
 
     this._socket.on('rpsGameChanged', rpsGame => {
@@ -1006,24 +1007,32 @@ export function useActiveConversationAreas(): ConversationAreaController[] {
  */
 export function useLeaderboard(): PlayerController[] {
   const townController = useTownController();
-  function top10(players: PlayerController[]) {
+  const top10 = (players: PlayerController[]) => {
     players.sort((a, b) => b.score - a.score);
     return players.slice(0, 10);
-  }
+  };
 
   const [leaderboard, setLeaderboard] = useState<PlayerController[]>(top10(townController.players));
 
   useEffect(() => {
-    const updateLeaderboard = () => {
-      setLeaderboard(top10(townController.players));
+    const updatePlayerScores = (result: RPSResult) => {
+      return townController.players.map(p => {
+        if (p.id === result.winner) {
+          p.incrementScore();
+        }
+        return p;
+      });
     };
-    const updateList = () => {
-      setLeaderboard(top10(townController.players));
+
+    const updateLeaderboard = (result: RPSResult) => {
+      setLeaderboard(top10(updatePlayerScores(result)));
+    };
+    const updateList = (players: PlayerController[]) => {
+      setLeaderboard(top10(players));
     };
 
     townController.addListener('rpsGameEnded', updateLeaderboard);
     townController.addListener('playersChanged', updateList);
-
     return () => {
       townController.removeListener('rpsGameEnded', updateLeaderboard);
       townController.removeListener('playersChanged', updateList);
