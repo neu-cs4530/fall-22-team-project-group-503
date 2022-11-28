@@ -504,12 +504,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
      * end game
      */
     this._socket.on('rpsGameEnded', end => {
-      // const playerToUpdate = this.players.find(eachPlayer => eachPlayer.id === end.winner);
-      // if (playerToUpdate) {
-      //   playerToUpdate.incrementScore();
-
-      //   this.emit('playerScoreUpdated', end);
-      // }
       this.emit('rpsGameEnded', end);
     });
 
