@@ -557,6 +557,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     this.emit('rpsChallengeRemoved', potentialOpponent);
   }
 
+  /**
+   * Removes the current RPS game
+   * @param game an RPS game
+   */
   removeRPSGame(game: RPSChallenge | undefined) {
     if (game) {
       game.response = false;
@@ -564,10 +568,10 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
     }
   }
 
-  completeGame(game: RPSChallenge) {
-    this.emit('rpsGameChanged', game);
-  }
-
+  /**
+   * Takes a given RPSPlayer move, sends it to the other players, and utilizes it to update the RPS game instance if applicable
+   * @param move a move this player makes for the RPS game they are participating in
+   */
   submitMove(move: RPSPlayerMove) {
     if (move.opponent === this.userID || move.player === this.userID) {
       const newGame = this._rpsGame;

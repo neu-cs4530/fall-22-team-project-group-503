@@ -74,23 +74,11 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
     }
 
     if (this._playerOneMove === Answer.ROCK) {
-      if (this._playerTwoMove === Answer.PAPER) {
-        playerWon = this.playerTwo;
-      } else {
-        playerWon = this.playerOne;
-      }
+      playerWon = this._playerTwoMove === Answer.PAPER ? this.playerTwo : this.playerOne;
     } else if (this._playerOneMove === Answer.PAPER) {
-      if (this._playerTwoMove === Answer.ROCK) {
-        playerWon = this.playerOne;
-      } else {
-        playerWon = this.playerTwo;
-      }
+      playerWon = this._playerTwoMove === Answer.ROCK ? this.playerOne : this.playerTwo;
     } else {
-      if (this._playerTwoMove === Answer.ROCK) {
-        playerWon = this.playerTwo;
-      } else if (this._playerTwoMove === Answer.PAPER) {
-        playerWon = this.playerOne;
-      }
+      playerWon = this._playerTwoMove === Answer.ROCK ? this.playerTwo : this.playerOne;
     }
     return {
       winner: playerWon,
@@ -103,7 +91,6 @@ export default class RPS extends (EventEmitter as new () => TypedEmitter<RPSEven
    * @param playerMove
    */
   public updateFrom(playerMove: RPSPlayerMove) {
-    // how to determine who is player one vs two
     if (playerMove.player === this.playerOne) {
       this.playerOneMove = playerMove.move;
     } else if (playerMove.player === this.playerTwo) {
