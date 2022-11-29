@@ -68,11 +68,6 @@ export type TownEvents = {
    */
   rpsGameEnded: (update: RPSResult) => void;
   /**
-   * An event that indicates that a player score has changed. This event is dispatched after updating the player's location -
-   * the new score can be found on the PlayerController.
-   */
-  playerScoreUpdated: (update: RPSResult) => void;
-  /**
    * An event that indicates that the set of conversation areas has changed. This event is dispatched
    * when a conversation area is created, or when the set of active conversations has changed. This event is dispatched
    * after updating the town controller's record of conversation areas.
@@ -237,8 +232,6 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
   private _interactableEmitter = new EventEmitter();
 
   private _viewingAreas: ViewingAreaController[] = [];
-
-  // private _rpsGames: RPS[] = [];
 
   private _rpsGame: RPS | undefined;
 
@@ -623,7 +616,7 @@ export default class TownController extends (EventEmitter as new () => TypedEmit
         const newGame = new RPS(challenger.id, challengee.id);
         this._rpsGame = newGame;
         response.response = true;
-        this._socket.emit('rpsGameChanged', response); // we need to make sure this works and emits correctly, since the PlayerControlleres did not work when emitted
+        this._socket.emit('rpsGameChanged', response);
         return newGame;
       }
     }
